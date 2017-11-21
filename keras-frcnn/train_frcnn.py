@@ -61,6 +61,7 @@ C = config.Config()
 # C.model_path = options.output_weight_path
 # C.num_rois = int(options.num_rois)
 #
+
 C.network = 'vgg'
 from keras_frcnn import vgg as nn
 
@@ -84,8 +85,9 @@ from keras_frcnn import vgg as nn
 
 # all_imgs, classes_count, class_mapping = get_data(options.train_path)
 
+C.base_net_weights = 'vgg19_weights_tf_dim_ordering_tf_kernels.h5'
 from keras_frcnn.pascal_voc_parser import get_data
-all_imgs, classes_count, class_mapping = get_data('F:\python\code\keras-frcnn-master')
+all_imgs, classes_count, class_mapping = get_data('')
 print('一共有{}张图片' , len(all_imgs))
 print('类别数：',len(classes_count))
 print('类别映射：' , class_mapping)

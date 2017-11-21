@@ -77,7 +77,15 @@ def get_new_img_size(width, height, img_min_side=600):
 
 
 class SampleSelector:
+	'''
+	样本选择类
+	'''
 	def __init__(self, class_count):
+		'''
+
+		:param class_count: 类别字典
+		:return:
+		'''
 		# ignore classes that have zero samples
 		self.classes = [b for b in class_count.keys() if class_count[b] > 0]
 		self.class_cycle = itertools.cycle(self.classes)
