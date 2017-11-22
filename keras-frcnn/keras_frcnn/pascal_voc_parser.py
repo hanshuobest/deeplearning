@@ -4,6 +4,11 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 def get_data(input_path):
+	'''
+
+	:param input_path: 文件路径
+	:return: all_imgs 、class_mapping、classes_count
+	'''
 	all_imgs = []
 	classes_count = {}
 	# 类别映射
@@ -25,6 +30,7 @@ def get_data(input_path):
 		# 测试集？
 		imgsets_path_test = os.path.join(data_path, 'ImageSets','Main','test.txt')
 
+		# 保存所有图片文件名
 		trainval_files = []
 		test_files = []
 		try:
@@ -54,7 +60,9 @@ def get_data(input_path):
 				et = ET.parse(annot)
 				element = et.getroot()
 
+				# 所有object对象
 				element_objs = element.findall('object')
+				# 图片文件名
 				element_filename = element.find('filename').text
 				element_width = int(element.find('size').find('width').text)
 				element_height = int(element.find('size').find('height').text)
@@ -71,7 +79,7 @@ def get_data(input_path):
 						annotation_data['imageset'] = 'trainval'
 
 				for element_obj in element_objs:
-					class_name = element_obj.find('name').text
+					class_name = element_obj.find('name').text # 记录对象类别名称
 					if class_name not in classes_count:
 						classes_count[class_name] = 1
 					else:
