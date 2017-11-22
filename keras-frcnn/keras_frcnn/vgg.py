@@ -116,6 +116,15 @@ def rpn(base_layers, num_anchors):
 
 
 def classifier(base_layers, input_rois, num_rois, nb_classes = 21, trainable=False):
+    '''
+
+    :param base_layers: feature map
+    :param input_rois: None * 4
+    :param num_rois: 4
+    :param nb_classes: 所有类别数
+    :param trainable:
+    :return:[out_class, out_regr]列表
+    '''
 
     # compile times on theano tend to be very high, so we use smaller ROI pooling regions to workaround
 
@@ -126,6 +135,7 @@ def classifier(base_layers, input_rois, num_rois, nb_classes = 21, trainable=Fal
         pooling_regions = 7
         input_shape = (num_rois,512,7,7)
 
+    # 卷积池化层
     out_roi_pool = RoiPoolingConv(pooling_regions, num_rois)([base_layers, input_rois])
 
     out = TimeDistributed(Flatten(name='flatten'))(out_roi_pool)

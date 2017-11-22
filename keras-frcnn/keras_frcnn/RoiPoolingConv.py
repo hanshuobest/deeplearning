@@ -27,7 +27,7 @@ class RoiPoolingConv(Layer):
     def __init__(self, pool_size, num_rois, **kwargs):
         '''
         用来初始化
-        :param pool_size:
+        :param pool_size:池化尺寸
         :param num_rois:
         :param kwargs:
         :return:
