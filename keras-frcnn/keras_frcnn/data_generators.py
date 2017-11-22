@@ -87,8 +87,10 @@ class SampleSelector:
 		:return:
 		'''
 		# ignore classes that have zero samples
+		# 忽略有0个样本的类别
 		self.classes = [b for b in class_count.keys() if class_count[b] > 0]
 		self.class_cycle = itertools.cycle(self.classes)
+		# 获取当前类别
 		self.curr_class = next(self.class_cycle)
 
 	def skip_sample_for_balanced_class(self, img_data):
@@ -324,12 +326,22 @@ def threadsafe_generator(f):
 	return g
 
 def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backend, mode='train'):
+	'''
+    生成器
+	:param all_img_data: 训练图片列表
+	:param class_count: 类别字典
+	:param C:
+	:param img_length_calc_function:
+	:param backend:
+	:param mode:
+	:return:
+	'''
 
 	# The following line is not useful with Python 3.5, it is kept for the legacy
 	# all_img_data = sorted(all_img_data)
 
 	sample_selector = SampleSelector(class_count)
-
+	print('all_img_data:' , len(all_img_data))
 	while True:
 		if mode == 'train':
 			np.random.shuffle(all_img_data)

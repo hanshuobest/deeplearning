@@ -32,6 +32,12 @@ def get_weight_path():
 
 
 def get_img_output_length(width, height):
+    '''
+
+    :param width: 输入宽度和高度
+    :param height:
+    :return: 输出宽度和高度
+    '''
     def get_output_length(input_length):
         return input_length//16
 
@@ -94,6 +100,12 @@ def nn_base(input_tensor=None, trainable=False):
     return x
 
 def rpn(base_layers, num_anchors):
+    '''
+    rpn计算
+    :param base_layers: feature map
+    :param num_anchors: anchor数量
+    :return: 返回一个列表
+    '''
 
     x = Conv2D(512, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(base_layers)
 
