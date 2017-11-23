@@ -209,6 +209,10 @@ for epoch_num in range(num_epochs):
 					print('RPN is not producing bounding boxes that overlap the ground truth boxes. Check RPN settings or keep training.')
 
 			X, Y, img_data = next(data_gen_train)
+			# print('X.shape:' , X.shape)
+			# print('Y.shape:' , Y.shape)
+			# print('img_data.shape:' , img_data.shape)
+
 
 			loss_rpn = model_rpn.train_on_batch(X, Y)
 
