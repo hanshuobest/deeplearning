@@ -9,7 +9,7 @@ def augment(img_data, config, augment=True):
 	:param img_data:
 	:param config:
 	:param augment:
-	:return:
+	:return:返回增强后数据和原始图片信息
 	'''
 	assert 'filepath' in img_data
 	assert 'bboxes' in img_data
@@ -24,7 +24,7 @@ def augment(img_data, config, augment=True):
 		rows, cols = img.shape[:2]
 
 		if config.use_horizontal_flips and np.random.randint(0, 2) == 0:
-			img = cv2.flip(img, 1)
+			img = cv2.flip(img, 1)  # 水平方向翻转
 			for bbox in img_data_aug['bboxes']:
 				x1 = bbox['x1']
 				x2 = bbox['x2']
@@ -32,7 +32,7 @@ def augment(img_data, config, augment=True):
 				bbox['x1'] = cols - x2
 
 		if config.use_vertical_flips and np.random.randint(0, 2) == 0:
-			img = cv2.flip(img, 0)
+			img = cv2.flip(img, 0) # 垂直翻转
 			for bbox in img_data_aug['bboxes']:
 				y1 = bbox['y1']
 				y2 = bbox['y2']
@@ -40,7 +40,7 @@ def augment(img_data, config, augment=True):
 				bbox['y1'] = rows - y2
 
 		if config.rot_90:
-			angle = np.random.choice([0,90,180,270],1)[0]
+			angle = np.random.choice([0,90,180,270],1)[0] # 随机产生一个角度
 			if angle == 270:
 				img = np.transpose(img, (1,0,2))
 				img = cv2.flip(img, 0) # 0 时上下翻转

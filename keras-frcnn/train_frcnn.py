@@ -213,8 +213,10 @@ for epoch_num in range(num_epochs):
 			# print('Y.shape:' , Y.shape)
 			# print('img_data.shape:' , img_data.shape)
 
-
+			# 本函数在一个batch的数据上进行一次参数更新
+			# 函数返回训练误差的标量值或者标量值得列表
 			loss_rpn = model_rpn.train_on_batch(X, Y)
+			print('type of loss_rpn:' , type(loss_rpn))
 
 			P_rpn = model_rpn.predict_on_batch(X)
 
