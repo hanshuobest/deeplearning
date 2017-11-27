@@ -159,6 +159,14 @@ def apply_regr_np(X, T):
 		return X
 
 def non_max_suppression_fast(boxes, probs, overlap_thresh=0.9, max_boxes=300):
+	'''
+	过滤掉重合度高的region并保留最优的
+	:param boxes:
+	:param probs:
+	:param overlap_thresh:
+	:param max_boxes:
+	:return:
+	'''
 	# code used from here: http://www.pyimagesearch.com/2015/02/16/faster-non-maximum-suppression-python/
 	# if there are no boxes, return an empty list
 	if len(boxes) == 0:
@@ -230,8 +238,8 @@ import time
 def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=300,overlap_thresh=0.9):
 	'''
 
-	:param rpn_layer:
-	:param regr_layer:
+	:param rpn_layer:分类
+	:param regr_layer:回归
 	:param C:
 	:param dim_ordering:
 	:param use_regr:

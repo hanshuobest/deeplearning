@@ -114,7 +114,7 @@ class SampleSelector:
 
 def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_length_calc_function):
 	'''
-
+	计算rpn
 	:param C: 配置信息
 	:param img_data: 包含一张图片的路径，bbox的坐标和对应的分类
 	:param width:
@@ -141,15 +141,20 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	
 	# initialise empty output objectives
 	# 初始化空的输出目标
+	# y_rpn_overlap [output_height , output_width , 9]
 	y_rpn_overlap = np.zeros((output_height, output_width, num_anchors)) # output_height * output_width * num_anchors
+	# y_is_box_valid [output_height , output_width , 9]
 	y_is_box_valid = np.zeros((output_height, output_width, num_anchors))# output_height * output_width * num_anchors
+	# y_rpn_regr [output_height , output_width , 36]
 	y_rpn_regr = np.zeros((output_height, output_width, num_anchors * 4))# output_height * output_width * 4 * num_anchors
 
-	# 计算有多少个bbox
+	# 计算每张图片有多少个bbox
 	num_bboxes = len(img_data['bboxes'])
+	print('num_bboxes:' , num_bboxes)
 
 	# 保存每个bbox有多少个num_anchors
 	num_anchors_for_bbox = np.zeros(num_bboxes).astype(int)
+	# 4 * 4 每一行表示为[jy ,jx , radio_idx , size_idx]
 	best_anchor_for_bbox = -1*np.ones((num_bboxes, 4)).astype(int) # num_bboxes * 4
 	best_iou_for_bbox = np.zeros(num_bboxes).astype(np.float32)
 	best_x_for_bbox = np.zeros((num_bboxes, 4)).astype(int)
@@ -257,6 +262,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	# we ensure that every bbox has at least one positive RPN region
 	# 确保每一个bbox至少有一个正RPN区域
 
+
 	for idx in range(num_anchors_for_bbox.shape[0]):
 		if num_anchors_for_bbox[idx] == 0:
 			# no box with an IOU greater than zero ...
@@ -272,13 +278,18 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 			y_rpn_regr[
 				best_anchor_for_bbox[idx,0], best_anchor_for_bbox[idx,1], start:start+4] = best_dx_for_bbox[idx, :]
 
+	# 转为 [9 , output_height , output_width]
 	y_rpn_overlap = np.transpose(y_rpn_overlap, (2, 0, 1))
 	y_rpn_overlap = np.expand_dims(y_rpn_overlap, axis=0)
 
+
+	# 转为 [9 , output_height , output_width]
 	y_is_box_valid = np.transpose(y_is_box_valid, (2, 0, 1))
 	y_is_box_valid = np.expand_dims(y_is_box_valid, axis=0)
 
+	# 转为 [36 , output_height , output_width]
 	y_rpn_regr = np.transpose(y_rpn_regr, (2, 0, 1))
+	# 转为 [1 , 9 , output_height , output_width]
 	y_rpn_regr = np.expand_dims(y_rpn_regr, axis=0)
 
 	pos_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 1, y_is_box_valid[0, :, :, :] == 1))
