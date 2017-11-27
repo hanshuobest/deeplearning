@@ -152,12 +152,19 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	num_bboxes = len(img_data['bboxes'])
 	print('num_bboxes:' , num_bboxes)
 
-	# 保存每个bbox有多少个num_anchors
+	# 保存每个bbox有多少个positive
 	num_anchors_for_bbox = np.zeros(num_bboxes).astype(int)
+
 	# 4 * 4 每一行表示为[jy ,jx , radio_idx , size_idx]
 	best_anchor_for_bbox = -1*np.ones((num_bboxes, 4)).astype(int) # num_bboxes * 4
+
+	# 记录每个bbox对应的iou系数
 	best_iou_for_bbox = np.zeros(num_bboxes).astype(np.float32)
+
+	# 保存anchor box坐标 [x1 , x2 , y1 , y2]
 	best_x_for_bbox = np.zeros((num_bboxes, 4)).astype(int)
+
+	# 保存anchor 偏移 [tx , ty , tw, th]
 	best_dx_for_bbox = np.zeros((num_bboxes, 4)).astype(np.float32)
 
 	# get the GT box coordinates, and resize to account for image resizing
