@@ -169,15 +169,18 @@ except:
 
 # model_rpn.summary()
 
-optimizer = Adam(lr=1e-5)
-optimizer_classifier = Adam(lr=1e-5)
+# optimizer = Adam(lr=1e-5)
+# optimizer_classifier = Adam(lr=1e-5)
+
+optimizer = Adam(lr=1e-2)
+optimizer_classifier = Adam(lr=1e-2)
 model_rpn.compile(optimizer=optimizer, loss=[losses.rpn_loss_cls(num_anchors), losses.rpn_loss_regr(num_anchors)])
 model_classifier.compile(optimizer=optimizer_classifier, loss=[losses.class_loss_cls, losses.class_loss_regr(len(classes_count)-1)], metrics={'dense_class_{}'.format(len(classes_count)): 'accuracy'})
 model_all.compile(optimizer='sgd', loss='mae')
 
-epoch_length = 1000
+epoch_length = 500
 # num_epochs = int(options.num_epochs)
-num_epochs = 1000
+num_epochs = 500
 iter_num = 0
 
 losses = np.zeros((epoch_length, 5))
@@ -208,19 +211,15 @@ for epoch_num in range(num_epochs):
 				if mean_overlapping_bboxes == 0:
 					print('RPN is not producing bounding boxes that overlap the ground truth boxes. Check RPN settings or keep training.')
 
+			# 原始图片信息，[rpn分类，rpn回归] , 增强图片信息
 			X, Y, img_data = next(data_gen_train)
-			# print('X.shape:' , X.shape)
-			# print('Y.shape:' , Y.shape)
-			# print('img_data.shape:' , img_data.shape)
 
 			# 本函数在一个batch的数据上进行一次参数更新
 			# 函数返回训练误差的标量值或者标量值得列表
 			loss_rpn = model_rpn.train_on_batch(X, Y)
-			print('type of loss_rpn:' , type(loss_rpn))
 
             # 在一个batch进行进行预测，返回模型在batch上的预测结果
 			P_rpn = model_rpn.predict_on_batch(X)
-			# print('P_rpn.shape:' , P_rpn.shape)
 
 			R = roi_helpers.rpn_to_roi(P_rpn[0], P_rpn[1], C, K.image_dim_ordering(), use_regr=True, overlap_thresh=0.7, max_boxes=300)
 			# note: calc_iou converts from (x1,y1,x2,y2) to (x,y,w,h) format
