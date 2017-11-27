@@ -49,6 +49,7 @@ img_path = options.test_path
 
 def format_img_size(img, C):
 	""" formats the image size based on config """
+	# 基于配置文件获取图片格式尺寸
 	img_min_side = float(C.im_size)
 	(height,width,_) = img.shape
 		

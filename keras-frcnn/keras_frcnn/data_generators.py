@@ -43,7 +43,7 @@ def iou(a, b):
 	计算iou系数
 	:param a: (x1,y1,x2,y2)
 	:param b: (x1,y1,x2,y2)
-	:return:
+	:return:返回iou系数
 	'''
 	# a and b should be (x1,y1,x2,y2)
 
@@ -61,7 +61,7 @@ def get_new_img_size(width, height, img_min_side=600):
 	计算新图片的尺寸
 	:param width:
 	:param height:
-	:param img_min_side:
+	:param img_min_side:新图片最小边的尺寸
 	:return:
 	'''
 	if width <= height:
@@ -122,14 +122,16 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	:param resized_width:
 	:param resized_height:
 	:param img_length_calc_function:
-	:return:
+	:return:y_rpn_cls,y_rpn_regr是否包含物体，和回归梯度
 	'''
 
 	# 图片到特征图的缩放倍数
 	downscale = float(C.rpn_stride)
-	anchor_sizes = C.anchor_box_scales
-	anchor_ratios = C.anchor_box_ratios
-	num_anchors = len(anchor_sizes) * len(anchor_ratios)	
+	# anchor 尺寸
+	anchor_sizes = C.anchor_box_scales # 3
+	# anchor 比率
+	anchor_ratios = C.anchor_box_ratios# 3
+	num_anchors = len(anchor_sizes) * len(anchor_ratios) # 9
 
 	# calculate the output map size based on the network architecture
 	# 基于网络结构计算输出特征图的尺寸
@@ -139,16 +141,16 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	
 	# initialise empty output objectives
 	# 初始化空的输出目标
-	y_rpn_overlap = np.zeros((output_height, output_width, num_anchors))
-	y_is_box_valid = np.zeros((output_height, output_width, num_anchors))
-	y_rpn_regr = np.zeros((output_height, output_width, num_anchors * 4))
+	y_rpn_overlap = np.zeros((output_height, output_width, num_anchors)) # output_height * output_width * num_anchors
+	y_is_box_valid = np.zeros((output_height, output_width, num_anchors))# output_height * output_width * num_anchors
+	y_rpn_regr = np.zeros((output_height, output_width, num_anchors * 4))# output_height * output_width * 4 * num_anchors
 
 	# 计算有多少个bbox
 	num_bboxes = len(img_data['bboxes'])
 
 	# 保存每个bbox有多少个num_anchors
 	num_anchors_for_bbox = np.zeros(num_bboxes).astype(int)
-	best_anchor_for_bbox = -1*np.ones((num_bboxes, 4)).astype(int)
+	best_anchor_for_bbox = -1*np.ones((num_bboxes, 4)).astype(int) # num_bboxes * 4
 	best_iou_for_bbox = np.zeros(num_bboxes).astype(np.float32)
 	best_x_for_bbox = np.zeros((num_bboxes, 4)).astype(int)
 	best_dx_for_bbox = np.zeros((num_bboxes, 4)).astype(np.float32)
@@ -166,11 +168,12 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 
 	for anchor_size_idx in range(len(anchor_sizes)):
 		for anchor_ratio_idx in range(n_anchratios):
-			anchor_x = anchor_sizes[anchor_size_idx] * anchor_ratios[anchor_ratio_idx][0]
-			anchor_y = anchor_sizes[anchor_size_idx] * anchor_ratios[anchor_ratio_idx][1]	
+			anchor_x = anchor_sizes[anchor_size_idx] * anchor_ratios[anchor_ratio_idx][0] # anchor 的宽度
+			anchor_y = anchor_sizes[anchor_size_idx] * anchor_ratios[anchor_ratio_idx][1] # anchor 的高度
 			
 			for ix in range(output_width):					
-				# x-coordinates of the current anchor box	
+				# x-coordinates of the current anchor box
+				# 当前anchor box的x坐标
 				x1_anc = downscale * (ix + 0.5) - anchor_x / 2
 				x2_anc = downscale * (ix + 0.5) + anchor_x / 2	
 				
@@ -198,6 +201,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 					for bbox_num in range(num_bboxes):
 						
 						# get IOU of the current GT box and the current anchor box
+						# 计算iou系数
 						curr_iou = iou([gta[bbox_num, 0], gta[bbox_num, 2], gta[bbox_num, 1], gta[bbox_num, 3]], [x1_anc, y1_anc, x2_anc, y2_anc])
 						# calculate the regression targets if they will be needed
 						if curr_iou > best_iou_for_bbox[bbox_num] or curr_iou > C.rpn_max_overlap:
@@ -235,7 +239,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 							if C.rpn_min_overlap < curr_iou < C.rpn_max_overlap:
 								# gray zone between neg and pos
 								if bbox_type != 'pos':
-									bbox_type = 'neutral'
+									bbox_type = 'neutral' # 中性
 
 					# turn on or off outputs depending on IOUs
 					if bbox_type == 'neg':
@@ -248,7 +252,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 						y_is_box_valid[jy, ix, anchor_ratio_idx + n_anchratios * anchor_size_idx] = 1
 						y_rpn_overlap[jy, ix, anchor_ratio_idx + n_anchratios * anchor_size_idx] = 1
 						start = 4 * (anchor_ratio_idx + n_anchratios * anchor_size_idx)
-						y_rpn_regr[jy, ix, start:start+4] = best_regr
+						y_rpn_regr[jy, ix, start:start+4] = best_regr #元组
 
 	# we ensure that every bbox has at least one positive RPN region
 	# 确保每一个bbox至少有一个正RPN区域
@@ -356,6 +360,8 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 
 				if mode == 'train':
 					img_data_aug, x_img = data_augment.augment(img_data, C, augment=True)
+					# img_data_aug 增强后的图片
+					# x_img 原始图片集
 				else:
 					img_data_aug, x_img = data_augment.augment(img_data, C, augment=False)
 

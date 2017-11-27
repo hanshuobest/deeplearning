@@ -7,8 +7,8 @@ import copy
 
 def calc_iou(R, img_data, C, class_mapping):
 	'''
-
-	:param R:
+	计算iou
+	:param R:代表什么 ？
 	:param img_data:
 	:param C:
 	:param class_mapping:
@@ -228,6 +228,17 @@ def non_max_suppression_fast(boxes, probs, overlap_thresh=0.9, max_boxes=300):
 
 import time
 def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=300,overlap_thresh=0.9):
+	'''
+
+	:param rpn_layer:
+	:param regr_layer:
+	:param C:
+	:param dim_ordering:
+	:param use_regr:
+	:param max_boxes:
+	:param overlap_thresh:
+	:return:
+	'''
 
 	regr_layer = regr_layer / C.std_scaling
 
@@ -259,6 +270,7 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 				regr = regr_layer[0, :, :, 4 * curr_layer:4 * curr_layer + 4]
 				regr = np.transpose(regr, (2, 0, 1))
 
+			# 从坐标向量返回坐标矩阵
 			X, Y = np.meshgrid(np.arange(cols),np. arange(rows))
 
 			A[0, :, :, curr_layer] = X - anchor_x/2
@@ -291,6 +303,7 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 
 	idxs = np.where((x1 - x2 >= 0) | (y1 - y2 >= 0))
 
+	# 删除指定行
 	all_boxes = np.delete(all_boxes, idxs, 0)
 	all_probs = np.delete(all_probs, idxs, 0)
 

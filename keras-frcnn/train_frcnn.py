@@ -60,8 +60,8 @@ C = config.Config()
 #
 # C.model_path = options.output_weight_path
 # C.num_rois = int(options.num_rois)
-#
 
+C.num_rois = 2
 C.network = 'vgg'
 from keras_frcnn import vgg as nn
 
@@ -125,7 +125,7 @@ val_imgs = [s for s in all_imgs if s['imageset'] == 'test']
 print('Num train samples {}'.format(len(train_imgs)))
 print('Num val samples {}'.format(len(val_imgs)))
 
-# 生成器
+# 生成器，包括原始图片信息，[rpn分类，rpn回归] , 增强图片信息
 data_gen_train = data_generators.get_anchor_gt(train_imgs, classes_count, C, nn.get_img_output_length,
                                                K.image_dim_ordering(), mode='train')
 
@@ -218,7 +218,9 @@ for epoch_num in range(num_epochs):
 			loss_rpn = model_rpn.train_on_batch(X, Y)
 			print('type of loss_rpn:' , type(loss_rpn))
 
+            # 在一个batch进行进行预测，返回模型在batch上的预测结果
 			P_rpn = model_rpn.predict_on_batch(X)
+			# print('P_rpn.shape:' , P_rpn.shape)
 
 			R = roi_helpers.rpn_to_roi(P_rpn[0], P_rpn[1], C, K.image_dim_ordering(), use_regr=True, overlap_thresh=0.7, max_boxes=300)
 			# note: calc_iou converts from (x1,y1,x2,y2) to (x,y,w,h) format

@@ -16,6 +16,13 @@ from sklearn.metrics import average_precision_score
 
 
 def get_map(pred, gt, f):
+	'''
+
+	:param pred:
+	:param gt:
+	:param f:
+	:return:
+	'''
 	T = {}
 	P = {}
 	fx, fy = f
