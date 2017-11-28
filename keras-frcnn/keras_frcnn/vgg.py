@@ -104,7 +104,7 @@ def rpn(base_layers, num_anchors):
     rpn计算
     :param base_layers: feature map
     :param num_anchors: anchor数量
-    :return: 返回一个列表
+    :return: 返回一个列表包含[分类信息，回归信息，特征图信息]
     '''
 
     x = Conv2D(512, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(base_layers)

@@ -139,6 +139,8 @@ else:
 	input_shape_img = (None, None, 3)
 
 img_input = Input(shape=input_shape_img)
+
+# roi输入
 roi_input = Input(shape=(None, 4))
 
 # define the base network (resnet here, can be VGG, Inception, etc)
@@ -146,12 +148,15 @@ roi_input = Input(shape=(None, 4))
 shared_layers = nn.nn_base(img_input, trainable=True)
 
 # # define the RPN, built on the base layers
+# anchor 的数量 ，一般为9
 num_anchors = len(C.anchor_box_scales) * len(C.anchor_box_ratios)
 print('num_anchors:' , num_anchors)
+
+# [分类信息，回归信息，特征图信息]
 rpn = nn.rpn(shared_layers, num_anchors)
 
+# classifier为[out_class, out_regr]
 classifier = nn.classifier(shared_layers, roi_input, C.num_rois, nb_classes=len(classes_count), trainable=True)
-print('classifier.type:' , type(classifier))
 
 model_rpn = Model(img_input, rpn[:2])
 model_classifier = Model([img_input, roi_input], classifier)
@@ -174,6 +179,7 @@ except:
 
 optimizer = Adam(lr=1e-2)
 optimizer_classifier = Adam(lr=1e-2)
+
 model_rpn.compile(optimizer=optimizer, loss=[losses.rpn_loss_cls(num_anchors), losses.rpn_loss_regr(num_anchors)])
 model_classifier.compile(optimizer=optimizer_classifier, loss=[losses.class_loss_cls, losses.class_loss_regr(len(classes_count)-1)], metrics={'dense_class_{}'.format(len(classes_count)): 'accuracy'})
 model_all.compile(optimizer='sgd', loss='mae')
