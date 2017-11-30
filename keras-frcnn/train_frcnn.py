@@ -22,12 +22,13 @@ from keras.utils import generic_utils
 sys.setrecursionlimit(40000)
 
 # parser = OptionParser()
-#
-# parser.add_option("-p", "--path", dest="train_path", help="Path to training data.")
+# parser.add_option("-p", "--path", dest="train_path", help="Path to training data.") # 训练文件路径
 # parser.add_option("-o", "--parser", dest="parser", help="Parser to use. One of simple or pascal_voc",
 # 				default="pascal_voc")
-# parser.add_option("-n", "--num_rois", type="int", dest="num_rois", help="Number of RoIs to process at once.", default=32)
-# parser.add_option("--network", dest="network", help="Base network to use. Supports vgg or resnet50.", default='resnet50')
+# parser.add_option("-n", "--num_rois", type="int", dest="num_rois", help="Number of RoIs to process at once.", default=32) # 一次性roi数量
+# parser.add_option("--network", dest="network", help="Base network to use. Supports vgg or resnet50.", default='resnet50') # 使用的基本网络
+
+# 数据增强操作
 # parser.add_option("--hf", dest="horizontal_flips", help="Augment with horizontal flips in training. (Default=false).", action="store_true", default=False)
 # parser.add_option("--vf", dest="vertical_flips", help="Augment with vertical flips in training. (Default=false).", action="store_true", default=False)
 # parser.add_option("--rot", "--rot_90", dest="rot_90", help="Augment with 90 degree rotations in training. (Default=false).",
@@ -36,7 +37,9 @@ sys.setrecursionlimit(40000)
 # parser.add_option("--config_filename", dest="config_filename", help=
 # 				"Location to store all the metadata related to the training (to be used when testing).",
 # 				default="config.pickle")
+# 输出权重文件
 # parser.add_option("--output_weight_path", dest="output_weight_path", help="Output path for weights.", default='./model_frcnn.hdf5')
+# 默认权重文件
 # parser.add_option("--input_weight_path", dest="input_weight_path", help="Input path for weights. If not specified, will try to load default weights provided by keras.")
 #
 # (options, args) = parser.parse_args()
@@ -100,6 +103,7 @@ if 'bg' not in classes_count:
 
 C.class_mapping = class_mapping
 
+# 字典的键-值位置颠倒
 inv_map = {v: k for k, v in class_mapping.items()}
 print('inv_map:' , inv_map)
 
@@ -125,7 +129,7 @@ val_imgs = [s for s in all_imgs if s['imageset'] == 'test']
 print('Num train samples {}'.format(len(train_imgs)))
 print('Num val samples {}'.format(len(val_imgs)))
 
-# 生成器，包括原始图片信息，[rpn分类，rpn回归] , 增强图片信息
+# 生成器，返回原始图片信息，[rpn分类，rpn回归] , 增强图片信息
 data_gen_train = data_generators.get_anchor_gt(train_imgs, classes_count, C, nn.get_img_output_length,
                                                K.image_dim_ordering(), mode='train')
 

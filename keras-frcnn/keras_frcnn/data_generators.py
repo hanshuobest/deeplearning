@@ -122,7 +122,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	:param resized_width:
 	:param resized_height:
 	:param img_length_calc_function:
-	:return:y_rpn_cls,y_rpn_regr是否包含物体，和回归梯度
+	:return:y_rpn_cls,y_rpn_regr是否包含物体类别信息，和回归梯度
 	'''
 
 	# 图片到特征图的缩放倍数
@@ -131,6 +131,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	anchor_sizes = C.anchor_box_scales # 3
 	# anchor 比率
 	anchor_ratios = C.anchor_box_ratios# 3
+	# anchor 的数量
 	num_anchors = len(anchor_sizes) * len(anchor_ratios) # 9
 
 	# calculate the output map size based on the network architecture
@@ -141,24 +142,24 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	
 	# initialise empty output objectives
 	# 初始化空的输出目标
-	# y_rpn_overlap [output_height , output_width , 9]
+	# y_rpn_overlap [output_height , output_width , 9] ， 三维张量
 	y_rpn_overlap = np.zeros((output_height, output_width, num_anchors)) # output_height * output_width * num_anchors
-	# y_is_box_valid [output_height , output_width , 9]
+	# y_is_box_valid [output_height , output_width , 9] 这个变量表示的是什么 ？三维张量
 	y_is_box_valid = np.zeros((output_height, output_width, num_anchors))# output_height * output_width * num_anchors
-	# y_rpn_regr [output_height , output_width , 36]
+	# y_rpn_regr [output_height , output_width , 36] 三维张量
 	y_rpn_regr = np.zeros((output_height, output_width, num_anchors * 4))# output_height * output_width * 4 * num_anchors
 
 	# 计算每张图片有多少个bbox
 	num_bboxes = len(img_data['bboxes'])
 	print('num_bboxes:' , num_bboxes)
 
-	# 保存每个bbox有多少个positive
+	# 保存每个bbox对应的anchor有多少个属性为positive ， 是一个一维数组
 	num_anchors_for_bbox = np.zeros(num_bboxes).astype(int)
 
-	# 4 * 4 每一行表示为[jy ,jx , radio_idx , size_idx]
+	# 4 * 4 每一行表示为[jy ,jx , radio_idx , size_idx]，二维数组，所有元素默认为-1
 	best_anchor_for_bbox = -1*np.ones((num_bboxes, 4)).astype(int) # num_bboxes * 4
 
-	# 记录每个bbox对应的iou系数
+	# 记录每个bbox对应的iou系数，一维数组
 	best_iou_for_bbox = np.zeros(num_bboxes).astype(np.float32)
 
 	# 保存anchor box坐标 [x1 , x2 , y1 , y2]
@@ -168,6 +169,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	best_dx_for_bbox = np.zeros((num_bboxes, 4)).astype(np.float32)
 
 	# get the GT box coordinates, and resize to account for image resizing
+	# 特征图上GT的坐标[x1 , x2 , y1 , y2]
 	gta = np.zeros((num_bboxes, 4))
 	for bbox_num, bbox in enumerate(img_data['bboxes']):
 		# get the GT box coordinates, and resize to account for image resizing
@@ -185,11 +187,12 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 			
 			for ix in range(output_width):					
 				# x-coordinates of the current anchor box
-				# 当前anchor box的x坐标
+				# 当前anchor box的x坐标 （x + 0.5）* 尺度 - anchor_x / 2
 				x1_anc = downscale * (ix + 0.5) - anchor_x / 2
 				x2_anc = downscale * (ix + 0.5) + anchor_x / 2	
 				
-				# ignore boxes that go across image boundaries					
+				# ignore boxes that go across image boundaries
+				# 忽略掉超过图像边界的点
 				if x1_anc < 0 or x2_anc > resized_width:
 					continue
 					
@@ -213,7 +216,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 					for bbox_num in range(num_bboxes):
 						
 						# get IOU of the current GT box and the current anchor box
-						# 计算iou系数
+						# 计算iou系数 ，输入的参数坐标形式[x1,y1,x2,y2]
 						curr_iou = iou([gta[bbox_num, 0], gta[bbox_num, 2], gta[bbox_num, 1], gta[bbox_num, 3]], [x1_anc, y1_anc, x2_anc, y2_anc])
 						# calculate the regression targets if they will be needed
 						if curr_iou > best_iou_for_bbox[bbox_num] or curr_iou > C.rpn_max_overlap:
@@ -224,14 +227,16 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 							cxa = (x1_anc + x2_anc)/2.0
 							cya = (y1_anc + y2_anc)/2.0
 
+							# ground truth和proposal计算得到真正需要的平移量
 							tx = (cx - cxa) / (x2_anc - x1_anc)
 							ty = (cy - cya) / (y2_anc - y1_anc)
 							tw = np.log((gta[bbox_num, 1] - gta[bbox_num, 0]) / (x2_anc - x1_anc))
 							th = np.log((gta[bbox_num, 3] - gta[bbox_num, 2]) / (y2_anc - y1_anc))
 
+						# 如果该bbox不是背景
 						if img_data['bboxes'][bbox_num]['class'] != 'bg':
-
 							# all GT boxes should be mapped to an anchor box, so we keep track of which anchor box was best
+							# 查找哪一个anchor box最好
 							if curr_iou > best_iou_for_bbox[bbox_num]:
 								best_anchor_for_bbox[bbox_num] = [jy, ix, anchor_ratio_idx, anchor_size_idx]
 								best_iou_for_bbox[bbox_num] = curr_iou
@@ -268,10 +273,8 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 
 	# we ensure that every bbox has at least one positive RPN region
 	# 确保每一个bbox至少有一个正RPN区域
-
-
 	for idx in range(num_anchors_for_bbox.shape[0]):
-		if num_anchors_for_bbox[idx] == 0:
+		if num_anchors_for_bbox[idx] == 0: # 该bbox对应的anchor数量为0
 			# no box with an IOU greater than zero ...
 			if best_anchor_for_bbox[idx, 0] == -1:
 				continue
@@ -282,6 +285,8 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 				best_anchor_for_bbox[idx,0], best_anchor_for_bbox[idx,1], best_anchor_for_bbox[idx,2] + n_anchratios *
 				best_anchor_for_bbox[idx,3]] = 1
 			start = 4 * (best_anchor_for_bbox[idx,2] + n_anchratios * best_anchor_for_bbox[idx,3])
+
+			# best_anchor_for_bbox[idx,0] = y坐标 ，best_anchor_for_bbox[idx,1] = x坐标
 			y_rpn_regr[
 				best_anchor_for_bbox[idx,0], best_anchor_for_bbox[idx,1], start:start+4] = best_dx_for_bbox[idx, :]
 
@@ -354,8 +359,8 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
     生成器
 	:param all_img_data: 训练图片列表
 	:param class_count: 类别字典
-	:param C:
-	:param img_length_calc_function:
+	:param C:配置参数信息
+	:param img_length_calc_function:计算图片尺寸的函数
 	:param backend:
 	:param mode:
 	:return:
@@ -364,20 +369,18 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 	# The following line is not useful with Python 3.5, it is kept for the legacy
 	# all_img_data = sorted(all_img_data)
 
+	# 样本选择器对象
 	sample_selector = SampleSelector(class_count)
-	print('all_img_data:' , len(all_img_data))
 	while True:
 		if mode == 'train':
 			np.random.shuffle(all_img_data)
 
 		for img_data in all_img_data:
 			try:
-
 				if C.balanced_classes and sample_selector.skip_sample_for_balanced_class(img_data):
 					continue
 
 				# read in image, and optionally add augmentation
-
 				if mode == 'train':
 					img_data_aug, x_img = data_augment.augment(img_data, C, augment=True)
 					# img_data_aug 增强后的图片
@@ -392,6 +395,7 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 				assert rows == height
 
 				# get image dimensions for resizing
+				# 获取新图片尺寸
 				(resized_width, resized_height) = get_new_img_size(width, height, C.im_size)
 
 				# resize the image so that smalles side is length = 600px
@@ -403,7 +407,7 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 					continue
 
 				# Zero-center by mean pixel, and preprocess image
-
+				# 图像预处理
 				x_img = x_img[:,:, (2, 1, 0)]  # BGR -> RGB
 				x_img = x_img.astype(np.float32)
 				x_img[:, :, 0] -= C.img_channel_mean[0]
@@ -411,13 +415,18 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 				x_img[:, :, 2] -= C.img_channel_mean[2]
 				x_img /= C.img_scaling_factor
 
+				print('x_img.shape:' , x_img.shape)
+				# x_img的尺寸变为(3 , 600 , 800)
 				x_img = np.transpose(x_img, (2, 0, 1))
 				x_img = np.expand_dims(x_img, axis=0)
 
-				y_rpn_regr[:, y_rpn_regr.shape[1]//2:, :, :] *= C.std_scaling
+				# y_rpn_regr.shape=(1 , 72 , 37 , 50)
+				print('y_rpn_regr.shape[1]:' , y_rpn_regr.shape[1])
+				y_rpn_regr[:, y_rpn_regr.shape[1]//2:, :, :] *= C.std_scaling # 后半部分为何要乘以标准尺度
 
 				if backend == 'tf':
 					x_img = np.transpose(x_img, (0, 2, 3, 1))
+					# y_rpn_cls.shape=(1 , 18 , 37 , 50)
 					y_rpn_cls = np.transpose(y_rpn_cls, (0, 2, 3, 1))
 					y_rpn_regr = np.transpose(y_rpn_regr, (0, 2, 3, 1))
 
