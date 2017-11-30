@@ -217,25 +217,25 @@ class MNIST_DCGAN(object):
             i = np.random.randint(0, self.x_train.shape[0], samples)
             images = self.x_train[i, :, :, :]
 
-        plt.figure(figsize=(10,10))
+        # plt.figure(figsize=(10,10))
         for i in range(images.shape[0]):
-            plt.subplot(4, 4, i+1)
+            # plt.subplot(4, 4, i+1)
             image = images[i, :, :, :]
             image = np.reshape(image, [self.img_rows, self.img_cols])
-            plt.imshow(image, cmap='gray')
-            plt.axis('off')
+            # plt.imshow(image, cmap='gray')
+            # plt.axis('off')
         # 自动调整子图参数，使之填充整个图像区域
-        plt.tight_layout()
-        if save2file:
-            plt.savefig(filename)
-            plt.close('all')
-        else:
-            plt.show()
+        # plt.tight_layout()
+        # if save2file:
+        #     plt.savefig(filename)
+        #     plt.close('all')
+        # else:
+        #     plt.show()
 
 if __name__ == '__main__':
     mnist_dcgan = MNIST_DCGAN()
     timer = ElapsedTimer()
     mnist_dcgan.train(train_steps=10000, batch_size=256, save_interval=500)
     timer.elapsed_time()
-    mnist_dcgan.plot_images(fake=True)
+    # mnist_dcgan.plot_images(fake=True)
     mnist_dcgan.plot_images(fake=False, save2file=True)
