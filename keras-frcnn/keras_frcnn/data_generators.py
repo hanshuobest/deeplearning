@@ -304,6 +304,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	# 转为 [1 , 9 , output_height , output_width]
 	y_rpn_regr = np.expand_dims(y_rpn_regr, axis=0)
 
+	# np.where 返回符合条件的行号
 	pos_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 1, y_is_box_valid[0, :, :, :] == 1))
 	neg_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 0, y_is_box_valid[0, :, :, :] == 1))
 
