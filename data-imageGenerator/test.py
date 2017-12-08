@@ -8,7 +8,8 @@ from keras.preprocessing.image import ImageDataGenerator , array_to_img , img_to
 datagen = ImageDataGenerator(featurewise_center=False , samplewise_center=False , featurewise_std_normalization=False , samplewise_std_normalization=False , zca_whitening=False  , rotation_range=20 , zoom_range=0.1 , height_shift_range= 0.125 , width_shift_range=0.125 , horizontal_flip=True , vertical_flip=True)
 
 # dir_path = 'F:\\c++\\BladeDefectRecognition\\trunk\\0-Src\\windTurbine\\SVM_Project\\positive'
-dir_path = 'F:\\c++\\BladeDefectRecognition\\trunk\\0-Src\\windTurbine\\SVM_Project\\negtive'
+# dir_path = 'F:\\c++\\BladeDefectRecognition\\trunk\\0-Src\\windTurbine\\SVM_Project\\negtive'
+dir_path = 'F:\\c++\\BladeDefectRecognition\\trunk\\0-Src\\windTurbine\\SVM_Project\\test'
 file_lists = glob.glob(dir_path + '/*.jpg')
 print(file_lists)
 
@@ -26,7 +27,8 @@ for img_file in file_lists:
         if i == 10:
             break
 # output_file = open(dir_path + '\\positive_files.txt' , "w")
-output_file = open(dir_path + '\\negtive_files.txt' , "w")
+# output_file = open(dir_path + '\\negtive_files.txt' , "w")
+output_file = open(dir_path + '\\test_files.txt' , "w")
 file_lists = glob.glob(dir_path + '/*.jpg')
 for img_file in file_lists:
     output_file.write(img_file + '\n')
