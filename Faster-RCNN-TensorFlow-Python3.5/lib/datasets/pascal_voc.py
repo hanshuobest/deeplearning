@@ -27,9 +27,10 @@ class pascal_voc(imdb):
         imdb.__init__(self, 'voc_' + year + '_' + image_set)
         self._year = year
         self._image_set = image_set
+        # 'F:\\python\\deeplearning.git\\trunk\\Faster-RCNN-TensorFlow-Python3.5\\data\\VOCdevkit2007'
         self._devkit_path = self._get_default_path() if devkit_path is None \
             else devkit_path
-        self._data_path = os.path.join(self._devkit_path, 'VOC' + self._year)
+        self._data_path = os.path.join(self._devkit_path, 'VOC' + self._year) # 数据文件，'F:\\python\\deeplearning.git\\trunk\\Faster-RCNN-TensorFlow-Python3.5\\data\\VOCdevkit2007\\VOC2007'
         self._classes = ('__background__',  # always index 0
                          'aeroplane', 'bicycle', 'bird', 'boat',
                          'bottle', 'bus', 'car', 'cat', 'chair',
@@ -38,19 +39,19 @@ class pascal_voc(imdb):
                          'sheep', 'sofa', 'train', 'tvmonitor')
         self._class_to_ind = dict(list(zip(self.classes, list(range(self.num_classes)))))
         self._image_ext = '.jpg'
-        self._image_index = self._load_image_set_index()
+        self._image_index = self._load_image_set_index() # 保存的图片索引
         # Default to roidb handler
         self._roidb_handler = self.gt_roidb
-        self._salt = str(uuid.uuid4())
+        self._salt = str(uuid.uuid4()) # 基于随机数获得一个唯一id
         self._comp_id = 'comp4'
 
-        # PASCAL specific config options
+        # PASCAL 待定的配置选项
         self.config = {'cleanup': True,
                        'use_salt': True,
                        'use_diff': False,
                        'matlab_eval': False,
                        'rpn_file': None}
-
+        print('self._devkit_path:', self._devkit_path)
         assert os.path.exists(self._devkit_path), \
             'VOCdevkit path does not exist: {}'.format(self._devkit_path)
         assert os.path.exists(self._data_path), \
@@ -75,6 +76,7 @@ class pascal_voc(imdb):
     def _load_image_set_index(self):
         """
         Load the indexes listed in this dataset's image set file.
+        返回图片索引
         """
         # Example path to image set file:
         # self._devkit_path + /VOCdevkit2007/VOC2007/ImageSets/Main/val.txt
@@ -88,14 +90,14 @@ class pascal_voc(imdb):
 
     def _get_default_path(self):
         """
-        Return the default path where PASCAL VOC is expected to be installed.
+        返回PASCAL VOC默认安装的路径
         """
         return os.path.join(cfg.FLAGS2["data_dir"], 'VOCdevkit' + self._year)
 
     def gt_roidb(self):
         """
         Return the database of ground-truth regions of interest.
-
+        返回真实数据库的感兴趣文件
         This function loads/saves from/to a cache file to speed up future calls.
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
@@ -139,6 +141,7 @@ class pascal_voc(imdb):
         """
         Load image and bounding boxes info from XML file in the PASCAL VOC
         format.
+        加载图像和边界box信息
         """
         filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
         tree = ET.parse(filename)
@@ -153,10 +156,13 @@ class pascal_voc(imdb):
             objs = non_diff_objs
         num_objs = len(objs)
 
+        # 记录所有对象box的左上角和右下角坐标
         boxes = np.zeros((num_objs, 4), dtype=np.uint16)
+        # 记录类别
         gt_classes = np.zeros((num_objs), dtype=np.int32)
+        # num_objs * num_classes
         overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)
-        # "Seg" area for pascal is just the box area
+        # 记录每个box的面积
         seg_areas = np.zeros((num_objs), dtype=np.float32)
 
         # Load object bounding boxes into a data frame.

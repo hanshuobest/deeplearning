@@ -18,8 +18,9 @@ except ImportError:
   import pickle
 import os
 
+# 返回用于训练的数据库感兴趣区域
 def get_training_roidb(imdb):
-    """Returns a roidb (Region of Interest database) for use in training."""
+    """Returns a roidb (Region of Interest database) for use in trainin"""
     if True:
         print('Appending horizontally-flipped training examples...')
         imdb.append_flipped_images()
@@ -32,7 +33,7 @@ def get_training_roidb(imdb):
     return imdb.roidb
 
 
-def combined_roidb(imdb_names):
+def combined_roidb(imdb_names): # "voc_2007_trainval"
     """
     Combine multiple roidbs
     """

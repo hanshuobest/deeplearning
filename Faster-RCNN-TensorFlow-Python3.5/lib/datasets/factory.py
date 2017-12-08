@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+# 保存数据集的字典
 __sets = {}
 from lib.datasets.pascal_voc import pascal_voc
 from lib.datasets.coco import coco
@@ -36,7 +37,7 @@ for year in ['2015']:
 
 
 def get_imdb(name):
-  """Get an imdb (image database) by name."""
+  """获取一个lmdb(图片数据库)名字."""
   if name not in __sets:
     raise KeyError('Unknown dataset: {}'.format(name))
   return __sets[name]()

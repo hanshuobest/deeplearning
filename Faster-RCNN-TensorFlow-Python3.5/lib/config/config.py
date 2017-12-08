@@ -100,15 +100,15 @@ tf.app.flags.DEFINE_integer('roi_pooling_size', 7, "Size of the pooled region af
 ######################
 # Dataset Parameters #
 ######################
-FLAGS2["root_dir"] = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
-FLAGS2["data_dir"] = osp.abspath(osp.join(FLAGS2["root_dir"], 'data'))
+FLAGS2["root_dir"] = osp.abspath(osp.join(osp.dirname(__file__), '..', '..')) # 根目录
+FLAGS2["data_dir"] = osp.abspath(osp.join(FLAGS2["root_dir"], 'data'))        # 数据目录
 
 
 def get_output_dir(imdb, weights_filename):
     """Return the directory where experimental artifacts are placed.
     If the directory does not exist, it is created.
 
-    A canonical path is built using the name from an imdb and a network
+    使用imdb和一个网络创建一个规范化路径
     (if not None).
     """
     outdir = osp.abspath(osp.join(FLAGS2["root_dir"], FLAGS2["root_dir"] , 'default', imdb.name))
