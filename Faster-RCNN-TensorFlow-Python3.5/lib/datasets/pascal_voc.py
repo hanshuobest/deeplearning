@@ -19,11 +19,20 @@ import scipy.sparse
 
 from lib.config import config as cfg
 from lib.datasets.imdb import imdb
-from .voc_eval import voc_eval
+# from .voc_eval import voc_eval
+
+from lib.datasets.voc_eval import voc_eval
 
 
 class pascal_voc(imdb):
     def __init__(self, image_set, year, devkit_path=None):
+        '''
+        初始化函数，对应着pascal_vol的数据集访问格式
+        :param image_set: 是一个str，值是'train'或者'test'或者'trainval'或者'val',表示用（训练集）或者（测试集）或者（训练验证集）
+        :param year:是要给str，表示VOC数据的年份
+        :param devkit_path:数据集所在的路径
+        :return:
+        '''
         imdb.__init__(self, 'voc_' + year + '_' + image_set)
         self._year = year
         self._image_set = image_set
@@ -39,7 +48,7 @@ class pascal_voc(imdb):
                          'sheep', 'sofa', 'train', 'tvmonitor')
         self._class_to_ind = dict(list(zip(self.classes, list(range(self.num_classes)))))
         self._image_ext = '.jpg'
-        self._image_index = self._load_image_set_index() # 保存的图片索引
+        self._image_index = self._load_image_set_index() # 保存所有图片的名称（没有后缀.jpg）
         # Default to roidb handler
         self._roidb_handler = self.gt_roidb
         self._salt = str(uuid.uuid4()) # 基于随机数获得一个唯一id
@@ -59,14 +68,16 @@ class pascal_voc(imdb):
 
     def image_path_at(self, i):
         """
-        Return the absolute path to image i in the image sequence.
+        根据第i个图像样本返回其对应的path，其调用了image_path_from_index(self, index)作为其具体实现
         """
         return self.image_path_from_index(self._image_index[i])
 
     def image_path_from_index(self, index):
-        """
-        Construct an image path from the image's "index" identifier.
-        """
+        '''
+        返回图片所在的路径
+        :param index:是一张图片的名字，假如说有一张图片叫lsq.jpg，这个值就是lsq,没有后缀名
+        :return:
+        '''
         image_path = os.path.join(self._data_path, 'JPEGImages',
                                   index + self._image_ext)
         assert os.path.exists(image_path), \
@@ -76,7 +87,7 @@ class pascal_voc(imdb):
     def _load_image_set_index(self):
         """
         Load the indexes listed in this dataset's image set file.
-        返回图片索引
+        保存所有图片的名称（没有后缀.jpg）
         """
         # Example path to image set file:
         # self._devkit_path + /VOCdevkit2007/VOC2007/ImageSets/Main/val.txt
@@ -91,13 +102,16 @@ class pascal_voc(imdb):
     def _get_default_path(self):
         """
         返回PASCAL VOC默认安装的路径
+        F:\python\deeplearning.git\trunk\Faster-RCNN-TensorFlow-Python3.5\data\VOCdevkit2007
         """
         return os.path.join(cfg.FLAGS2["data_dir"], 'VOCdevkit' + self._year)
 
     def gt_roidb(self):
         """
         Return the database of ground-truth regions of interest.
-        返回真实数据库的感兴趣文件
+        读取并返回图片gt的db。这个函数就是将图片的gt加载进来。
+        其中，pascal_voc图片的gt信息在XML文件中（这个XML文件是pascal_voc数据集本身提供的）
+        并且，图片的gt被提前放在了一个.pkl文件里面。（这个.pkl文件需要我们自己生成，代码就在该函数中）
         This function loads/saves from/to a cache file to speed up future calls.
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
@@ -109,7 +123,8 @@ class pascal_voc(imdb):
                     roidb = pickle.load(fid, encoding='bytes')
             print('{} gt roidb loaded from {}'.format(self.name, cache_file))
             return roidb
-
+        # 如果不存在说明是第一次执行本函数
+        # gt_roidb 保存获取图片的gt
         gt_roidb = [self._load_pascal_annotation(index)
                     for index in self.image_index]
         with open(cache_file, 'wb') as fid:
@@ -138,12 +153,12 @@ class pascal_voc(imdb):
         return self.create_roidb_from_box_list(box_list, gt_roidb)
 
     def _load_pascal_annotation(self, index):
-        """
-        Load image and bounding boxes info from XML file in the PASCAL VOC
-        format.
-        加载图像和边界box信息
-        """
-        filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
+        '''
+        从xml文件中获取图片信息和gt
+        :param index: 一张图片的名称（没有后缀.jpg）
+        :return:
+        '''
+        filename = os.path.join(self._data_path, 'Annotations', index + '.xml') # 例如VOCdevkit/VOC2007/Annotations/000005.xml
         tree = ET.parse(filename)
         objs = tree.findall('object')
         if not self.config['use_diff']:
@@ -299,7 +314,6 @@ class pascal_voc(imdb):
 
 
 if __name__ == '__main__':
-    from datasets.pascal_voc import pascal_voc
 
     d = pascal_voc('trainval', '2007')
     res = d.roidb

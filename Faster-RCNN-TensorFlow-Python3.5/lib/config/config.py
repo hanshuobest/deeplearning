@@ -40,7 +40,10 @@ tf.app.flags.DEFINE_boolean('use_all_gt', True, "Whether to use all ground truth
                                                 "For COCO, setting USE_ALL_GT to False will exclude boxes that are flagged as ''iscrowd''")
 tf.app.flags.DEFINE_integer('max_size', 1000, "Max pixel size of the longest side of a scaled input image")
 tf.app.flags.DEFINE_integer('test_max_size', 1000, "Max pixel size of the longest side of a scaled input image")
+
+# 每次输入到faster rcnn网络中的图片数量是1张
 tf.app.flags.DEFINE_integer('ims_per_batch', 1, "Images to use per minibatch")
+# 训练的时候没5000步保存一次模型
 tf.app.flags.DEFINE_integer('snapshot_iterations', 5000, "Iteration to take snapshot")
 
 FLAGS2["scales"] = (600,)

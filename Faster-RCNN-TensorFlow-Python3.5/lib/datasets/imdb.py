@@ -22,6 +22,12 @@ class imdb(object):
     """Image database."""
 
     def __init__(self, name, classes=None):
+        '''
+
+        :param name:name是形参，传进来的参数是'voc_2007_train' or ‘voc_2007_test’ or 'voc_2007_val' or 'voc_2007_trainval'
+        :param classes:
+        :return:
+        '''
         self._name = name
         self._num_classes = 0
         if not classes:
@@ -29,6 +35,7 @@ class imdb(object):
         else:
             self._classes = classes
         self._image_index = []
+        self._image_annatations_index = []
         self._obj_proposer = 'gt'
         self._roidb = None
         self._roidb_handler = self.default_roidb
@@ -77,7 +84,7 @@ class imdb(object):
 
     @property
     def cache_path(self):
-        cache_path = osp.abspath(osp.join(cfg.FLAGS2["data_dir"], 'cache'))
+        cache_path = osp.abspath(osp.join(cfg.FLAGS2["data_dir"], 'cache')) # 该路径是 F:\python\deeplearning.git\trunk\Faster-RCNN-TensorFlow-Python3.5\data\cache
         if not os.path.exists(cache_path):
             os.makedirs(cache_path)
         return cache_path
