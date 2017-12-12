@@ -27,10 +27,10 @@ from lib.datasets.voc_eval import voc_eval
 class pascal_voc(imdb):
     def __init__(self, image_set, year, devkit_path=None):
         '''
-        初始化函数，对应着pascal_vol的数据集访问格式
-        :param image_set: 是一个str，值是'train'或者'test'或者'trainval'或者'val',表示用（训练集）或者（测试集）或者（训练验证集）
-        :param year:是要给str，表示VOC数据的年份
-        :param devkit_path:数据集所在的路径
+
+        :param image_set: 'train', 'val', 'trainval', 'test'
+        :param year:2007 或者2012
+        :param devkit_path:
         :return:
         '''
         imdb.__init__(self, 'voc_' + year + '_' + image_set)
@@ -91,6 +91,7 @@ class pascal_voc(imdb):
         """
         # Example path to image set file:
         # self._devkit_path + /VOCdevkit2007/VOC2007/ImageSets/Main/val.txt
+        # _image_set:val
         image_set_file = os.path.join(self._data_path, 'ImageSets', 'Main',
                                       self._image_set + '.txt')
         assert os.path.exists(image_set_file), \
@@ -154,8 +155,8 @@ class pascal_voc(imdb):
 
     def _load_pascal_annotation(self, index):
         '''
-        从xml文件中获取图片信息和gt
-        :param index: 一张图片的名称（没有后缀.jpg）
+        加载图像和边界box信息
+        :param index: 图像文件名，不带后缀.jpg
         :return:
         '''
         filename = os.path.join(self._data_path, 'Annotations', index + '.xml') # 例如VOCdevkit/VOC2007/Annotations/000005.xml

@@ -10,15 +10,17 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-# 保存数据集的字典
+# 保存数据集的字典,字典中存储的是类对象
 __sets = {}
 from lib.datasets.pascal_voc import pascal_voc
 from lib.datasets.coco import coco
 
 import numpy as np
 
+# devkit_path = "F:\\python\\deeplearning.git\\trunk\\Faster-RCNN-TensorFlow-Python3.5\\data\\VOCdevkit2017"
+
 # Set up voc_<year>_<split>
-for year in ['2007', '2012']:
+for year in ['2007', '2012' , '2017']:
   for split in ['train', 'val', 'trainval', 'test']:
     name = 'voc_{}_{}'.format(year, split)
     __sets[name] = (lambda split=split, year=year: pascal_voc(split, year))
@@ -37,7 +39,11 @@ for year in ['2015']:
 
 
 def get_imdb(name):
-  """获取一个lmdb(图片数据库)名字."""
+  '''
+  返回保存数据的类
+  :param name:
+  :return:
+  '''
   if name not in __sets:
     raise KeyError('Unknown dataset: {}'.format(name))
   return __sets[name]()

@@ -11,17 +11,20 @@ from lib.datasets.imdb import imdb as imdb2
 from lib.layer_utils.roi_data_layer import RoIDataLayer
 from lib.nets.vgg16 import vgg16
 from lib.utils.timer import Timer
-from lib.datasets import factory_bak
 
 try:
   import cPickle as pickle
 except ImportError:
   import pickle
 import os
-import pdb
 
 # 返回用于训练的数据库感兴趣区域
 def get_training_roidb(imdb):
+    '''
+
+    :param imdb: 保存数据库的类对象
+    :return:
+    '''
     """Returns a roidb (Region of Interest database) for use in trainin"""
     if True:
         print('Appending horizontally-flipped training examples...')
@@ -41,8 +44,7 @@ def combined_roidb(imdb_names): # "voc_2007_trainval"
     """
 
     def get_roidb(imdb_name):
-        # imdb = get_imdb(imdb_name)
-        imdb = factory_bak.get_imdb(imdb_name)
+        imdb = get_imdb(imdb_name)
         print('Loaded dataset `{:s}` for training'.format(imdb.name))
         imdb.set_proposal_method("gt")
         print('Set proposal method: {:s}'.format("gt"))
@@ -54,6 +56,7 @@ def combined_roidb(imdb_names): # "voc_2007_trainval"
     if len(roidbs) > 1:
         for r in roidbs[1:]:
             roidb.extend(r)
+
         tmp = get_imdb(imdb_names.split('+')[1])
         imdb = imdb2(imdb_names, tmp.classes)
     else:
@@ -64,13 +67,14 @@ def combined_roidb(imdb_names): # "voc_2007_trainval"
 class Train:
     def __init__(self):
 
-        # Create network
+        # 创建网络
         if cfg.FLAGS.network == 'vgg16':
             self.net = vgg16(batch_size=cfg.FLAGS.ims_per_batch)
         else:
             raise NotImplementedError
 
-        self.imdb, self.roidb = combined_roidb("CompanyData_Train")
+        self.imdb, self.roidb = combined_roidb("voc_2007_trainval")
+        # self.imdb, self.roidb = combined_roidb("voc_2017_trainval")
 
         self.data_layer = RoIDataLayer(self.roidb, self.imdb.num_classes)
         self.output_dir = cfg.get_output_dir(self.imdb, 'default')
@@ -110,8 +114,14 @@ class Train:
             else:
                 train_op = optimizer.apply_gradients(gvs)
 
+            # We will handle the snapshots ourselves
             self.saver = tf.train.Saver(max_to_keep=100000)
+            # Write the train and validation information to tensorboard
+            # writer = tf.summary.FileWriter(self.tbdir, sess.graph)
+            # valwriter = tf.summary.FileWriter(self.tbvaldir)
 
+        # Load weights
+        # Fresh train directly from ImageNet weights
         print('Loading initial model weights from {:s}'.format(cfg.FLAGS.pretrained_model))
         variables = tf.global_variables()
         # Initialize all variables first

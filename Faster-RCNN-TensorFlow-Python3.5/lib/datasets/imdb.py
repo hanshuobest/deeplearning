@@ -78,6 +78,10 @@ class imdb(object):
 
     @property
     def roidb(self):
+        '''
+        返回groud truth信息
+        :return:
+        '''
         # A roidb is a list of dictionaries, each with the following keys:
         #   boxes
         #   gt_overlaps
@@ -97,6 +101,10 @@ class imdb(object):
 
     @property
     def num_images(self):
+        '''
+        返回图像数量
+        :return:
+        '''
         return len(self.image_index)
 
     def image_path_at(self, i):
@@ -121,6 +129,10 @@ class imdb(object):
                 for i in range(self.num_images)]
 
     def append_flipped_images(self):
+        '''
+        图像水平翻转
+        :return:
+        '''
         num_images = self.num_images
         widths = self._get_widths()
         for i in range(num_images):
