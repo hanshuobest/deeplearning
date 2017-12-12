@@ -35,6 +35,7 @@ class imdb(object):
         else:
             self._classes = classes
         self._image_index = []
+        # 保存标注的xml文件
         self._image_annatations_index = []
         self._obj_proposer = 'gt'
         self._roidb = None
@@ -59,6 +60,10 @@ class imdb(object):
         return self._image_index
 
     @property
+    def image_annatation_index(self):
+        return self._image_annatations_index
+
+    @property
     def roidb_handler(self):
         return self._roidb_handler
 
@@ -68,6 +73,7 @@ class imdb(object):
 
     def set_proposal_method(self, method):
         method = eval('self.' + method + '_roidb')
+        print('type of method:' , type(method))
         self.roidb_handler = method
 
     @property
