@@ -19,27 +19,17 @@ import scipy.sparse
 
 from lib.config import config as cfg
 from lib.datasets.imdb import imdb
-# from .voc_eval import voc_eval
-
-from lib.datasets.voc_eval import voc_eval
+from .voc_eval import voc_eval
 
 
 class pascal_voc(imdb):
     def __init__(self, image_set, year, devkit_path=None):
-        '''
-
-        :param image_set: 'train', 'val', 'trainval', 'test'
-        :param year:2007 或者2012
-        :param devkit_path:
-        :return:
-        '''
         imdb.__init__(self, 'voc_' + year + '_' + image_set)
         self._year = year
         self._image_set = image_set
-        # 'F:\\python\\deeplearning.git\\trunk\\Faster-RCNN-TensorFlow-Python3.5\\data\\VOCdevkit2007'
         self._devkit_path = self._get_default_path() if devkit_path is None \
             else devkit_path
-        self._data_path = os.path.join(self._devkit_path, 'VOC' + self._year) # 数据文件，'F:\\python\\deeplearning.git\\trunk\\Faster-RCNN-TensorFlow-Python3.5\\data\\VOCdevkit2007\\VOC2007'
+        self._data_path = os.path.join(self._devkit_path, 'VOC' + self._year)
         self._classes = ('__background__',  # always index 0
                          'aeroplane', 'bicycle', 'bird', 'boat',
                          'bottle', 'bus', 'car', 'cat', 'chair',
@@ -48,19 +38,19 @@ class pascal_voc(imdb):
                          'sheep', 'sofa', 'train', 'tvmonitor')
         self._class_to_ind = dict(list(zip(self.classes, list(range(self.num_classes)))))
         self._image_ext = '.jpg'
-        self._image_index = self._load_image_set_index() # 保存所有图片的名称（没有后缀.jpg）
+        self._image_index = self._load_image_set_index()
         # Default to roidb handler
         self._roidb_handler = self.gt_roidb
-        self._salt = str(uuid.uuid4()) # 基于随机数获得一个唯一id
+        self._salt = str(uuid.uuid4())
         self._comp_id = 'comp4'
 
-        # PASCAL 待定的配置选项
+        # PASCAL specific config options
         self.config = {'cleanup': True,
                        'use_salt': True,
                        'use_diff': False,
                        'matlab_eval': False,
                        'rpn_file': None}
-        print('self._devkit_path:', self._devkit_path)
+
         assert os.path.exists(self._devkit_path), \
             'VOCdevkit path does not exist: {}'.format(self._devkit_path)
         assert os.path.exists(self._data_path), \
@@ -68,16 +58,14 @@ class pascal_voc(imdb):
 
     def image_path_at(self, i):
         """
-        根据第i个图像样本返回其对应的path，其调用了image_path_from_index(self, index)作为其具体实现
+        Return the absolute path to image i in the image sequence.
         """
         return self.image_path_from_index(self._image_index[i])
 
     def image_path_from_index(self, index):
-        '''
-        返回图片所在的路径
-        :param index:是一张图片的名字，假如说有一张图片叫lsq.jpg，这个值就是lsq,没有后缀名
-        :return:
-        '''
+        """
+        Construct an image path from the image's "index" identifier.
+        """
         image_path = os.path.join(self._data_path, 'JPEGImages',
                                   index + self._image_ext)
         assert os.path.exists(image_path), \
@@ -87,11 +75,9 @@ class pascal_voc(imdb):
     def _load_image_set_index(self):
         """
         Load the indexes listed in this dataset's image set file.
-        保存所有图片的名称（没有后缀.jpg）
         """
         # Example path to image set file:
         # self._devkit_path + /VOCdevkit2007/VOC2007/ImageSets/Main/val.txt
-        # _image_set:val
         image_set_file = os.path.join(self._data_path, 'ImageSets', 'Main',
                                       self._image_set + '.txt')
         assert os.path.exists(image_set_file), \
@@ -102,17 +88,14 @@ class pascal_voc(imdb):
 
     def _get_default_path(self):
         """
-        返回PASCAL VOC默认安装的路径
-        F:\python\deeplearning.git\trunk\Faster-RCNN-TensorFlow-Python3.5\data\VOCdevkit2007
+        Return the default path where PASCAL VOC is expected to be installed.
         """
         return os.path.join(cfg.FLAGS2["data_dir"], 'VOCdevkit' + self._year)
 
     def gt_roidb(self):
         """
         Return the database of ground-truth regions of interest.
-        读取并返回图片gt的db。这个函数就是将图片的gt加载进来。
-        其中，pascal_voc图片的gt信息在XML文件中（这个XML文件是pascal_voc数据集本身提供的）
-        并且，图片的gt被提前放在了一个.pkl文件里面。（这个.pkl文件需要我们自己生成，代码就在该函数中）
+
         This function loads/saves from/to a cache file to speed up future calls.
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
@@ -124,8 +107,7 @@ class pascal_voc(imdb):
                     roidb = pickle.load(fid, encoding='bytes')
             print('{} gt roidb loaded from {}'.format(self.name, cache_file))
             return roidb
-        # 如果不存在说明是第一次执行本函数
-        # gt_roidb 保存获取图片的gt
+
         gt_roidb = [self._load_pascal_annotation(index)
                     for index in self.image_index]
         with open(cache_file, 'wb') as fid:
@@ -154,12 +136,11 @@ class pascal_voc(imdb):
         return self.create_roidb_from_box_list(box_list, gt_roidb)
 
     def _load_pascal_annotation(self, index):
-        '''
-        加载图像和边界box信息
-        :param index: 图像文件名，不带后缀.jpg
-        :return:
-        '''
-        filename = os.path.join(self._data_path, 'Annotations', index + '.xml') # 例如VOCdevkit/VOC2007/Annotations/000005.xml
+        """
+        Load image and bounding boxes info from XML file in the PASCAL VOC
+        format.
+        """
+        filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
         tree = ET.parse(filename)
         objs = tree.findall('object')
         if not self.config['use_diff']:
@@ -172,13 +153,10 @@ class pascal_voc(imdb):
             objs = non_diff_objs
         num_objs = len(objs)
 
-        # 记录所有对象box的左上角和右下角坐标
         boxes = np.zeros((num_objs, 4), dtype=np.uint16)
-        # 记录类别
         gt_classes = np.zeros((num_objs), dtype=np.int32)
-        # num_objs * num_classes
         overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)
-        # 记录每个box的面积
+        # "Seg" area for pascal is just the box area
         seg_areas = np.zeros((num_objs), dtype=np.float32)
 
         # Load object bounding boxes into a data frame.
@@ -315,6 +293,7 @@ class pascal_voc(imdb):
 
 
 if __name__ == '__main__':
+    from datasets.pascal_voc import pascal_voc
 
     d = pascal_voc('trainval', '2007')
     res = d.roidb
