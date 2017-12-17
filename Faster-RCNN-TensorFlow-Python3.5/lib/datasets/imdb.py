@@ -22,12 +22,6 @@ class imdb(object):
     """Image database."""
 
     def __init__(self, name, classes=None):
-        '''
-
-        :param name:name是形参，传进来的参数是'voc_2007_train' or ‘voc_2007_test’ or 'voc_2007_val' or 'voc_2007_trainval'
-        :param classes:
-        :return:
-        '''
         self._name = name
         self._num_classes = 0
         if not classes:
@@ -35,8 +29,6 @@ class imdb(object):
         else:
             self._classes = classes
         self._image_index = []
-        # 保存标注的xml文件
-        self._image_annatations_index = []
         self._obj_proposer = 'gt'
         self._roidb = None
         self._roidb_handler = self.default_roidb
@@ -60,10 +52,6 @@ class imdb(object):
         return self._image_index
 
     @property
-    def image_annatation_index(self):
-        return self._image_annatations_index
-
-    @property
     def roidb_handler(self):
         return self._roidb_handler
 
@@ -73,15 +61,10 @@ class imdb(object):
 
     def set_proposal_method(self, method):
         method = eval('self.' + method + '_roidb')
-        print('type of method:' , type(method))
         self.roidb_handler = method
 
     @property
     def roidb(self):
-        '''
-        返回groud truth信息
-        :return:
-        '''
         # A roidb is a list of dictionaries, each with the following keys:
         #   boxes
         #   gt_overlaps
@@ -94,17 +77,13 @@ class imdb(object):
 
     @property
     def cache_path(self):
-        cache_path = osp.abspath(osp.join(cfg.FLAGS2["data_dir"], 'cache')) # 该路径是 F:\python\deeplearning.git\trunk\Faster-RCNN-TensorFlow-Python3.5\data\cache
+        cache_path = osp.abspath(osp.join(cfg.FLAGS2["data_dir"], 'cache'))
         if not os.path.exists(cache_path):
             os.makedirs(cache_path)
         return cache_path
 
     @property
     def num_images(self):
-        '''
-        返回图像数量
-        :return:
-        '''
         return len(self.image_index)
 
     def image_path_at(self, i):
@@ -129,10 +108,6 @@ class imdb(object):
                 for i in range(self.num_images)]
 
     def append_flipped_images(self):
-        '''
-        图像水平翻转
-        :return:
-        '''
         num_images = self.num_images
         widths = self._get_widths()
         for i in range(num_images):
