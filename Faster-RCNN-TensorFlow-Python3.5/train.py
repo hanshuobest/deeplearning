@@ -119,6 +119,7 @@ class Train:
         variables = tf.global_variables()
         # Initialize all variables first
         sess.run(tf.variables_initializer(variables, name='init'))
+        print('pretrained_model:',cfg.FLAGS.pretrained_model)
         var_keep_dic = self.get_variables_in_checkpoint_file(cfg.FLAGS.pretrained_model)
         # Get the variables to restore, ignorizing the variables to fix
         variables_to_restore = self.net.get_variables_to_restore(variables, var_keep_dic)
@@ -204,8 +205,10 @@ class Train:
             pickle.dump(iter, fid, pickle.HIGHEST_PROTOCOL)
 
         return filename, nfilename
-
-
-if __name__ == '__main__':
+def main(_):
     train = Train()
     train.train()
+
+if __name__ == '__main__':
+    tf.app.run()
+
