@@ -40,10 +40,7 @@ tf.app.flags.DEFINE_boolean('use_all_gt', True, "Whether to use all ground truth
                                                 "For COCO, setting USE_ALL_GT to False will exclude boxes that are flagged as ''iscrowd''")
 tf.app.flags.DEFINE_integer('max_size', 1000, "Max pixel size of the longest side of a scaled input image")
 tf.app.flags.DEFINE_integer('test_max_size', 1000, "Max pixel size of the longest side of a scaled input image")
-
-# 每次输入到faster rcnn网络中的图片数量是1张
 tf.app.flags.DEFINE_integer('ims_per_batch', 1, "Images to use per minibatch")
-# 训练的时候没5000步保存一次模型
 tf.app.flags.DEFINE_integer('snapshot_iterations', 5000, "Iteration to take snapshot")
 
 FLAGS2["scales"] = (600,)
@@ -103,15 +100,15 @@ tf.app.flags.DEFINE_integer('roi_pooling_size', 7, "Size of the pooled region af
 ######################
 # Dataset Parameters #
 ######################
-FLAGS2["root_dir"] = osp.abspath(osp.join(osp.dirname(__file__), '..', '..')) # 根目录
-FLAGS2["data_dir"] = osp.abspath(osp.join(FLAGS2["root_dir"], 'data'))        # 数据目录
+FLAGS2["root_dir"] = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
+FLAGS2["data_dir"] = osp.abspath(osp.join(FLAGS2["root_dir"], 'data'))
 
 
 def get_output_dir(imdb, weights_filename):
     """Return the directory where experimental artifacts are placed.
     If the directory does not exist, it is created.
 
-    使用imdb和一个网络创建一个规范化路径
+    A canonical path is built using the name from an imdb and a network
     (if not None).
     """
     outdir = osp.abspath(osp.join(FLAGS2["root_dir"], FLAGS2["root_dir"] , 'default', imdb.name))

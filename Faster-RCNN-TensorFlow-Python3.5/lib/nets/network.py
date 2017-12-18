@@ -125,7 +125,8 @@ class Network(object):
             y2 = tf.slice(rois, [0, 4], [-1, 1], name="y2") / height
             # Won't be backpropagated to rois anyway, but to save time
             bboxes = tf.stop_gradient(tf.concat([y1, x1, y2, x2], axis=1))
-            pre_pool_size = cfg.FLAGS.roi_pooling_size * 2
+            # pre_pool_size = cfg.FLAGS.roi_pooling_size * 2
+            pre_pool_size = 7 * 2
             crops = tf.image.crop_and_resize(bottom, bboxes, tf.to_int32(batch_ids), [pre_pool_size, pre_pool_size], name="crops")
 
         return slim.max_pool2d(crops, [2, 2], padding='SAME')
@@ -162,12 +163,19 @@ class Network(object):
                 [rois, roi_scores, self._gt_boxes, self._num_classes],
                 [tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.float32])
 
-            rois.set_shape([cfg.FLAGS.batch_size, 5])
-            roi_scores.set_shape([cfg.FLAGS.batch_size])
-            labels.set_shape([cfg.FLAGS.batch_size, 1])
-            bbox_targets.set_shape([cfg.FLAGS.batch_size, self._num_classes * 4])
-            bbox_inside_weights.set_shape([cfg.FLAGS.batch_size, self._num_classes * 4])
-            bbox_outside_weights.set_shape([cfg.FLAGS.batch_size, self._num_classes * 4])
+            # rois.set_shape([cfg.FLAGS.batch_size, 5])
+            # roi_scores.set_shape([cfg.FLAGS.batch_size])
+            # labels.set_shape([cfg.FLAGS.batch_size, 1])
+            # bbox_targets.set_shape([cfg.FLAGS.batch_size, self._num_classes * 4])
+            # bbox_inside_weights.set_shape([cfg.FLAGS.batch_size, self._num_classes * 4])
+            # bbox_outside_weights.set_shape([cfg.FLAGS.batch_size, self._num_classes * 4])
+
+            rois.set_shape([256, 5])
+            roi_scores.set_shape([256])
+            labels.set_shape([256, 1])
+            bbox_targets.set_shape([256, self._num_classes * 4])
+            bbox_inside_weights.set_shape([256, self._num_classes * 4])
+            bbox_outside_weights.set_shape([256, self._num_classes * 4])
 
             self._proposal_targets['rois'] = rois
             self._proposal_targets['labels'] = tf.to_int32(labels, name="to_int32")
@@ -280,11 +288,14 @@ class Network(object):
         assert tag != None
 
         # handle most of the regularizer here
-        weights_regularizer = tf.contrib.layers.l2_regularizer(cfg.FLAGS.weight_decay)
-        if cfg.FLAGS.bias_decay:
-            biases_regularizer = weights_regularizer
-        else:
-            biases_regularizer = tf.no_regularizer
+        # weights_regularizer = tf.contrib.layers.l2_regularizer(cfg.FLAGS.weight_decay)  0.0005
+        weights_regularizer = tf.contrib.layers.l2_regularizer(0.0005)
+
+        # if cfg.FLAGS.bias_decay:
+        #     biases_regularizer = weights_regularizer
+        # else:
+        #     biases_regularizer = tf.no_regularizer
+        biases_regularizer = tf.no_regularizer
 
         # list as many types of layers as possible, even if they are not used now
         with arg_scope([slim.conv2d, slim.conv2d_in_plane,

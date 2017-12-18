@@ -19,12 +19,15 @@ class vgg16(Network):
         with tf.variable_scope('vgg_16', 'vgg_16'):
 
             # select initializer
-            if cfg.FLAGS.initializer == "truncated":
-                initializer = tf.truncated_normal_initializer(mean=0.0, stddev=0.01)
-                initializer_bbox = tf.truncated_normal_initializer(mean=0.0, stddev=0.001)
-            else:
-                initializer = tf.random_normal_initializer(mean=0.0, stddev=0.01)
-                initializer_bbox = tf.random_normal_initializer(mean=0.0, stddev=0.001)
+            # if cfg.FLAGS.initializer == "truncated":
+            #     initializer = tf.truncated_normal_initializer(mean=0.0, stddev=0.01)
+            #     initializer_bbox = tf.truncated_normal_initializer(mean=0.0, stddev=0.001)
+            # else:
+            #     initializer = tf.random_normal_initializer(mean=0.0, stddev=0.01)
+            #     initializer_bbox = tf.random_normal_initializer(mean=0.0, stddev=0.001)
+
+            initializer = tf.truncated_normal_initializer(mean=0.0, stddev=0.01)
+            initializer_bbox = tf.truncated_normal_initializer(mean=0.0, stddev=0.001)
 
             # Build head
             net = self.build_head(is_training)

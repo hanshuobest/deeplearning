@@ -36,7 +36,7 @@ CLASSES = ('__background__',
            'motorbike', 'person', 'pottedplant',
            'sheep', 'sofa', 'train', 'tvmonitor')
 
-NETS = {'vgg16': ('vgg16_faster_rcnn_iter_40000.ckpt',), 'res101': ('res101_faster_rcnn_iter_110000.ckpt',)}
+NETS = {'vgg16': ('vgg16_faster_rcnn_iter_70000.ckpt',), 'res101': ('res101_faster_rcnn_iter_110000.ckpt',)}
 DATASETS = {'pascal_voc': ('voc_2007_trainval',), 'pascal_voc_0712': ('voc_2007_trainval+voc_2012_trainval',)}
 
 
@@ -114,18 +114,12 @@ def parse_args():
 
 
 if __name__ == '__main__':
-    # args = parse_args()
-    #
-    # # 模型路径，可以选择vgg16和res101
-    # demonet = args.demo_net
-    # # 选择数据集
-    # dataset = args.dataset
+    args = parse_args()
 
-    demonet = 'vgg16'
-    dataset = 'pascal_voc'
-
-    # tfmodel = os.path.join('output', demonet, DATASETS[dataset][0], 'default', NETS[demonet][0])
-    tfmodel = os.path.join('default', DATASETS[dataset][0], 'default', NETS[demonet][0])
+    # model path
+    demonet = args.demo_net
+    dataset = args.dataset
+    tfmodel = os.path.join('output', demonet, DATASETS[dataset][0], 'default', NETS[demonet][0])
 
     if not os.path.isfile(tfmodel + '.meta'):
         print(tfmodel)
@@ -152,7 +146,7 @@ if __name__ == '__main__':
 
     print('Loaded network {:s}'.format(tfmodel))
 
-    im_names = ['1.jpg' , '000456.jpg', '000457.jpg', '000542.jpg', '001150.jpg',
+    im_names = ['000456.jpg', '000457.jpg', '000542.jpg', '001150.jpg',
                 '001763.jpg', '004545.jpg']
     for im_name in im_names:
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

@@ -123,7 +123,8 @@ class pascal_voc(imdb):
         # 如果不存在说明是第一次执行本函数
         # gt_roidb 保存获取图片的gt
         gt_roidb = [self._load_pascal_annotation(index)
-                    for index in self.image_index]
+                    for index in self.image_index if self._load_pascal_annotation(index).__contains__('boxes')]
+        print('gt_roidb:' , len(gt_roidb))
         with open(cache_file, 'wb') as fid:
             pickle.dump(gt_roidb, fid, pickle.HIGHEST_PROTOCOL)
         print('wrote gt roidb to {}'.format(cache_file))
@@ -155,21 +156,37 @@ class pascal_voc(imdb):
         :param index: 图像文件名，不带后缀.jpg
         :return:
         '''
-        filename = os.path.join(self._data_path, 'Annotations', index + '.xml') # 例如VOCdevkit/VOC2007/Annotations/000005.xml
-        tree = ET.parse(filename)
-        print('filename:' , filename)
-
-        element_root = tree.getroot()
-        pic_filename = element_root.find('filename').text
-        labels = element_root.find('labels')
-        label_count = labels.findall('label')
-        num_objs = len(label_count) - 1
+        path = os.path.join(self._data_path, 'Annotations', index + '.xml') # 例如VOCdevkit/VOC2007/Annotations/000005.xml
 
         fengji_info = {}
-        color = label_count[0].find('color').text
-        fengji_info['filename'] = pic_filename
-        fengji_info['color'] = color
-        poly_points = label_count[0].find('points').findall('point')
+        et = ET.parse(path)
+        element_root = et.getroot()
+        filename = element_root.find('filename').text
+        fengji_info['filename'] = filename
+
+        if filename == 'GanSuQiaoDongC-105-2-0030-1125.jpg':
+            print(filename)
+
+        amount = int(element_root.find('amount').text)
+        if amount == 0:
+            # print('该xml文件为空！' , filename[:-3])
+            return fengji_info
+
+        labels = element_root.find('labels')
+        label_count = labels.findall('label')
+
+        fengji_index = None
+        for i in range(len(label_count)):
+            name = labels[i].find('name').text
+            if name == '风机':
+                fengji_index = i
+                break
+        if fengji_index == None:
+            # print('wrong filename:' , filename[:-3])
+            return fengji_info
+
+        color = label_count[fengji_index].find('color').text
+        poly_points = label_count[fengji_index].find('points').findall('point')
 
         # 保存叶片轮廓信息
         polygon_lst = []
@@ -179,44 +196,125 @@ class pascal_voc(imdb):
             polygon_lst.append((x, y))
         fengji_info['polygon'] = polygon_lst
 
-        # 记录所有对象box的左上角和右下角坐标
-        boxes = np.zeros((num_objs, 4), dtype=np.uint16)
-        # 记录类别
-        gt_classes = np.zeros((num_objs), dtype=np.int32)
-        # num_objs * num_classes
-        overlaps = np.zeros((num_objs, self.num_classes), dtype=np.float32)
+        boxes = np.zeros((len(label_count) - 1, 4), dtype=np.float32)
+        gt_class = np.zeros((len(label_count) - 1), dtype=np.int32)
+        overlaps = np.zeros((len(label_count) - 1, 5), dtype=np.float32)
         # 记录每个box的面积
-        seg_areas = np.zeros((num_objs), dtype=np.float32)
-        for i in range(1, len(label_count)):
-            name = label_count[i].find('name').text
-            points = label_count[i].find('points').findall('point')
+        seg_areas = np.zeros((len(label_count) - 1), dtype=np.float32)
+        if fengji_index == 0:
+            for i in range(1, len(label_count)):
+                name = label_count[i].find('name').text
+                points = label_count[i].find('points').findall('point')
+                defect_info = {}
+                defect_info['class'] = name
+                polygon = []
 
-            xmin = 10000
-            ymin = 10000
-            xmax = -10000
-            ymax = -10000
-            for point in points:
-                x = float(point.find('x').text)
-                y = float(point.find('y').text)
+                xmin = 10000.0
+                ymin = 10000.0
+                xmax = -10000.0
+                ymax = -10000.0
 
-                xmax = max(x, xmax)
-                ymax = max(y, ymax)
-                xmin = min(x, xmin)
-                ymin = min(y, ymin)
-            boxes[i - 1, :] = [xmin, ymin, xmax, ymax]
-            cls = self._class_to_ind[name]
-            gt_classes[i - 1] = cls
-            overlaps[i - 1, cls] = 1.0
-            seg_areas[i - 1] = (xmax - xmin + 1) * (ymax - ymin + 1)
+                for point in points:
+                    x = float(point.find('x').text)
+                    y = float(point.find('y').text)
+                    polygon.append((x, y))
+
+                    xmax = max(x, xmax)
+                    ymax = max(y, ymax)
+                    xmin = min(x, xmin)
+                    ymin = min(y, ymin)
+                boxes[i - 1, :] = [xmin, ymin, xmax, ymax]
+
+                if name == '表面不良':
+                    gt_class[i - 1] = 1
+                elif name == '砂眼':
+                    gt_class[i - 1] = 2
+                elif name == '涂料损伤':
+                    gt_class[i - 1] = 3
+                else:
+                    gt_class[i - 1] = 4
+
+                overlaps[i - 1, gt_class[i - 1]] = 1.0
+                seg_areas[i - 1] = (xmax - xmin + 1) * (ymax - ymin + 1)
+        else:
+            for i in range(0, fengji_index):
+                name = label_count[i].find('name').text
+                points = label_count[i].find('points').findall('point')
+                defect_info = {}
+                defect_info['class'] = name
+                polygon = []
+
+                xmin = 10000
+                ymin = 10000
+                xmax = -10000
+                ymax = -10000
+
+                for point in points:
+                    x = float(point.find('x').text)
+                    y = float(point.find('y').text)
+                    polygon.append((x, y))
+
+                    xmax = max(x, xmax)
+                    ymax = max(y, ymax)
+                    xmin = min(x, xmin)
+                    ymin = min(y, ymin)
+                boxes[i, :] = [xmin, ymin, xmax, ymax]
+
+                if name == '表面不良':
+                    gt_class[i] = 1
+                elif name == '砂眼':
+                    gt_class[i] = 2
+                elif name == '涂料损伤':
+                    gt_class[i] = 3
+                else:
+                    gt_class[i] = 4
+
+                overlaps[i, gt_class[i]] = 1.0
+                seg_areas[i] = (xmax - xmin + 1) * (ymax - ymin + 1)
+
+            for i in range(fengji_index + 1, len(label_count)):
+                name = label_count[i].find('name').text
+                points = label_count[i].find('points').findall('point')
+                defect_info = {}
+                defect_info['class'] = name
+                polygon = []
+
+                xmin = 10000
+                ymin = 10000
+                xmax = -10000
+                ymax = -10000
+
+                for point in points:
+                    x = float(point.find('x').text)
+                    y = float(point.find('y').text)
+                    polygon.append((x, y))
+
+                    xmax = max(x, xmax)
+                    ymax = max(y, ymax)
+                    xmin = min(x, xmin)
+                    ymin = min(y, ymin)
+                boxes[i - 1, :] = [xmin, ymin, xmax, ymax]
+
+                if name == '表面不良':
+                    gt_class[i - 1] = 1
+                elif name == '砂眼':
+                    gt_class[i - 1] = 2
+                elif name == '涂料损伤':
+                    gt_class[i - 1] = 3
+                else:
+                    gt_class[i - 1] = 4
+
+                overlaps[i - 1, gt_class[i - 1]] = 1.0
+                seg_areas[i - 1] = (xmax - xmin + 1) * (ymax - ymin + 1)
 
         overlaps = scipy.sparse.csr_matrix(overlaps)
-
         fengji_info['gt_overlaps'] = overlaps
         fengji_info['flipped'] = False
         fengji_info['seg_areas'] = seg_areas
         fengji_info['boxes'] = boxes
-
-#         print('fengji_info:' , fengji_info)
+        fengji_info['gt_classes'] = gt_class
+        fengji_info['polygon'] = polygon_lst
+        fengji_info['color'] = color
         return fengji_info
 
     def _get_comp_id(self):

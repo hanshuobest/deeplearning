@@ -6,7 +6,8 @@ from tensorflow.python import pywrap_tensorflow
 
 import lib.config.config as cfg
 from lib.datasets import roidb as rdl_roidb
-from lib.datasets.factory import get_imdb
+# from lib.datasets.factory import get_imdb
+from lib.datasets.factory_bak2 import get_imdb
 from lib.datasets.imdb import imdb as imdb2
 from lib.layer_utils.roi_data_layer import RoIDataLayer
 from lib.nets.vgg16 import vgg16
@@ -18,8 +19,14 @@ except ImportError:
   import pickle
 import os
 
+# 返回用于训练的数据库感兴趣区域
 def get_training_roidb(imdb):
-    """Returns a roidb (Region of Interest database) for use in training."""
+    '''
+
+    :param imdb: 保存数据库的类对象
+    :return:
+    '''
+    """Returns a roidb (Region of Interest database) for use in trainin"""
     if True:
         print('Appending horizontally-flipped training examples...')
         imdb.append_flipped_images()
@@ -32,7 +39,7 @@ def get_training_roidb(imdb):
     return imdb.roidb
 
 
-def combined_roidb(imdb_names):
+def combined_roidb(imdb_names): # "voc_2007_trainval"
     """
     Combine multiple roidbs
     """
@@ -50,6 +57,7 @@ def combined_roidb(imdb_names):
     if len(roidbs) > 1:
         for r in roidbs[1:]:
             roidb.extend(r)
+
         tmp = get_imdb(imdb_names.split('+')[1])
         imdb = imdb2(imdb_names, tmp.classes)
     else:
@@ -59,22 +67,24 @@ def combined_roidb(imdb_names):
 
 class Train:
     def __init__(self):
-        print('init')
-        self.net = vgg16(1)
-        # # Create network
+
+        # 创建网络
         # if cfg.FLAGS.network == 'vgg16':
         #     self.net = vgg16(batch_size=cfg.FLAGS.ims_per_batch)
         # else:
         #     raise NotImplementedError
-        #
-        self.imdb, self.roidb = combined_roidb("voc_2007_trainval")
+
+        self.net = vgg16(1)
+
+        # self.imdb, self.roidb = combined_roidb("voc_2007_trainval")
+        self.imdb, self.roidb = combined_roidb("voc_2017_trainval")
 
         self.data_layer = RoIDataLayer(self.roidb, self.imdb.num_classes)
         self.output_dir = cfg.get_output_dir(self.imdb, 'default')
 
 
     def train(self):
-        print('train')
+
         # Create session
         tfconfig = tf.ConfigProto(allow_soft_placement=True)
         tfconfig.gpu_options.allow_growth = True
@@ -82,23 +92,26 @@ class Train:
 
         with sess.graph.as_default():
 
-            tf.set_random_seed(cfg.FLAGS.rng_seed)
+            # tf.set_random_seed(cfg.FLAGS.rng_seed)
+            tf.set_random_seed(3)
             layers = self.net.create_architecture(sess, "TRAIN", self.imdb.num_classes, tag='default')
             loss = layers['total_loss']
-            lr = tf.Variable(cfg.FLAGS.learning_rate, trainable=False)
-            momentum = cfg.FLAGS.momentum
+            # lr = tf.Variable(cfg.FLAGS.learning_rate, trainable=False)
+            lr = tf.Variable(0.001, trainable=False)
+            # momentum = cfg.FLAGS.momentum
+            momentum = 0.9
             optimizer = tf.train.MomentumOptimizer(lr, momentum)
 
             gvs = optimizer.compute_gradients(loss)
 
             # Double bias
             # Double the gradient of the bias if set
-            if cfg.FLAGS.double_bias:
+            if True:
                 final_gvs = []
                 with tf.variable_scope('Gradient_Mult'):
                     for grad, var in gvs:
                         scale = 1.
-                        if cfg.FLAGS.double_bias and '/biases:' in var.name:
+                        if True and '/biases:' in var.name:
                             scale *= 2.
                         if not np.allclose(scale, 1.0):
                             grad = tf.multiply(grad, scale)
@@ -115,23 +128,23 @@ class Train:
 
         # Load weights
         # Fresh train directly from ImageNet weights
-        print('Loading initial model weights from {:s}'.format(cfg.FLAGS.pretrained_model))
+        print('Loading initial model weights from {:s}'.format('./data/imagenet_weights/vgg16.ckpt'))
         variables = tf.global_variables()
         # Initialize all variables first
         sess.run(tf.variables_initializer(variables, name='init'))
-        var_keep_dic = self.get_variables_in_checkpoint_file(cfg.FLAGS.pretrained_model)
+        var_keep_dic = self.get_variables_in_checkpoint_file('./data/imagenet_weights/vgg16.ckpt')
         # Get the variables to restore, ignorizing the variables to fix
         variables_to_restore = self.net.get_variables_to_restore(variables, var_keep_dic)
 
         restorer = tf.train.Saver(variables_to_restore)
-        restorer.restore(sess, cfg.FLAGS.pretrained_model)
+        restorer.restore(sess, './data/imagenet_weights/vgg16.ckpt')
         print('Loaded.')
         # Need to fix the variables before loading, so that the RGB weights are changed to BGR
         # For VGG16 it also changes the convolutional weights fc6 and fc7 to
         # fully connected weights
-        self.net.fix_variables(sess, cfg.FLAGS.pretrained_model)
+        self.net.fix_variables(sess, '‘’')
         print('Fixed.')
-        sess.run(tf.assign(lr, cfg.FLAGS.learning_rate))
+        sess.run(tf.assign(lr, 0.001))
         last_snapshot_iter = 0
 
         timer = Timer()
