@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 import os 
 #os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import numpy as np
@@ -17,7 +18,7 @@ class myUnet(object):
 		self.img_cols = img_cols
 
 	def load_data(self):
-
+		# 定义数据处理对象
 		mydata = dataProcess(self.img_rows, self.img_cols)
 		imgs_train, imgs_mask_train = mydata.load_train_data()
 		imgs_test = mydata.load_test_data()
@@ -27,17 +28,19 @@ class myUnet(object):
 
 		inputs = Input((self.img_rows, self.img_cols,1))
 
+        # 参数两计算 64 × （3 × 3 + 1）
 		conv1 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
-		print ("conv1 shape:",conv1.shape)
+		print ("conv1_1 shape:",conv1.shape)
+        # 64 × （3 × 3 × 64 + 1）
 		conv1 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv1)
-		print ("conv1 shape:",conv1.shape)
+		print ("conv1_2 shape:",conv1.shape)
 		pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
 		print ("pool1 shape:",pool1.shape)
 
 		conv2 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool1)
-		print ("conv2 shape:",conv2.shape)
+		print ("conv2_1 shape:",conv2.shape)
 		conv2 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv2)
-		print ("conv2 shape:",conv2.shape)
+		print ("conv2_2 shape:",conv2.shape)
 		pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
 		print ("pool2 shape:",pool2.shape)
 
@@ -51,6 +54,7 @@ class myUnet(object):
 		conv4 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
 		conv4 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
 		drop4 = Dropout(0.5)(conv4)
+
 		pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
 
 		conv5 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
@@ -82,6 +86,8 @@ class myUnet(object):
 		conv9 = Conv2D(2, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
 		conv10 = Conv2D(1, 1, activation = 'sigmoid')(conv9)
 
+
+
 		model = Model(input = inputs, output = conv10)
 
 		# 编译模型以供训练
@@ -94,9 +100,11 @@ class myUnet(object):
 
 		print("loading data")
 		imgs_train, imgs_mask_train, imgs_test = self.load_data()
+
 		print("loading data done")
 		model = self.get_unet()
 		print("got unet")
+		print(model.summary())
 
 		# 模型检查点
 		model_checkpoint = ModelCheckpoint('unet.hdf5', monitor='loss',verbose=1, save_best_only=True)

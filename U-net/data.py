@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 import numpy as np 
 import os
@@ -31,11 +33,11 @@ class myAugmentation(object):
 		self.aug_label_path = aug_label_path
 		self.slices = len(self.train_imgs)
 		self.datagen = ImageDataGenerator(
-							        rotation_range=0.2,
-							        width_shift_range=0.05,
-							        height_shift_range=0.05,
-							        shear_range=0.05,
-							        zoom_range=0.05,
+							        rotation_range=0.2,     # 数据提升时随机旋转的角度
+							        width_shift_range=0.05, # 数据提升时图片水平偏移的幅度
+							        height_shift_range=0.05,#
+							        shear_range=0.05,       # 逆时针剪切变换的角度
+							        zoom_range=0.05,        # 随机缩放的幅度
 							        horizontal_flip=True,
 							        fill_mode='nearest')
 
