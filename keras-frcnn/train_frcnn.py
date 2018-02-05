@@ -1,3 +1,5 @@
+#coding:utf-8
+
 from __future__ import division
 import random
 import pprint
@@ -91,11 +93,12 @@ from keras_frcnn import vgg as nn
 C.base_net_weights = 'vgg19_weights_tf_dim_ordering_tf_kernels.h5'
 from keras_frcnn.pascal_voc_parser import get_data
 
+datapath = '/home/han/DataSets/VOCdevkit-2012'
 # all_imgs列表 ， classes_count字典 ， class_mapping字典
-all_imgs, classes_count, class_mapping = get_data('')
-print('一共有{}张图片' , len(all_imgs))
-print('类别数：',len(classes_count))
-print('类别映射：' , class_mapping)
+all_imgs, classes_count, class_mapping = get_data(datapath)
+print('the number of image is :' , len(all_imgs))
+print('the number of classes is :',len(classes_count))
+print('the class map is :' , class_mapping)
 
 if 'bg' not in classes_count:
 	classes_count['bg'] = 0
@@ -105,11 +108,11 @@ C.class_mapping = class_mapping
 
 # 字典的键-值位置颠倒
 inv_map = {v: k for k, v in class_mapping.items()}
-print('inv_map:' , inv_map)
-
-print('Training images per class:')
-pprint.pprint(classes_count)
-print('Num classes (including bg) = {}'.format(len(classes_count)))
+# print('inv_map:' , inv_map)
+#
+# print('Training images per class:')
+# pprint.pprint(classes_count)
+# print('Num classes (including bg) = {}'.format(len(classes_count)))
 
 # config_output_filename = options.config_filename
 #
@@ -126,8 +129,10 @@ train_imgs = [s for s in all_imgs if s['imageset'] == 'trainval']
 # 验证图片列表
 val_imgs = [s for s in all_imgs if s['imageset'] == 'test']
 
+print('----------------------------------------------')
 print('Num train samples {}'.format(len(train_imgs)))
 print('Num val samples {}'.format(len(val_imgs)))
+print('---------------------------------------------')
 
 # 生成器，返回原始图片信息，[rpn分类，rpn回归] , 增强图片信息
 data_gen_train = data_generators.get_anchor_gt(train_imgs, classes_count, C, nn.get_img_output_length,
@@ -150,6 +155,11 @@ roi_input = Input(shape=(None, 4))
 # define the base network (resnet here, can be VGG, Inception, etc)
 # 卷积后的feature map?
 shared_layers = nn.nn_base(img_input, trainable=True)
+print('\n')
+print('---------------------------------------------')
+print('shared_layers:' , shared_layers.shape)
+print('---------------------------------------------')
+print('\n')
 
 # # define the RPN, built on the base layers
 # anchor 的数量 ，一般为9
@@ -158,10 +168,15 @@ print('num_anchors:' , num_anchors)
 
 # [分类信息，回归信息，特征图信息]
 rpn = nn.rpn(shared_layers, num_anchors)
+print('-----------------------------------')
+print("type of rpn:" , type(rpn) , len(rpn))
+print('-----------------------------------')
+print('\n')
 
 # classifier为[out_class, out_regr]
 classifier = nn.classifier(shared_layers, roi_input, C.num_rois, nb_classes=len(classes_count), trainable=True)
 
+# 函数式模型
 model_rpn = Model(img_input, rpn[:2])
 model_classifier = Model([img_input, roi_input], classifier)
 
@@ -222,11 +237,15 @@ for epoch_num in range(num_epochs):
 					print('RPN is not producing bounding boxes that overlap the ground truth boxes. Check RPN settings or keep training.')
 
 			# 原始图片信息，[rpn分类，rpn回归] , 增强图片信息
+			# img_data 类型为字典
 			X, Y, img_data = next(data_gen_train)
 
 			# 本函数在一个batch的数据上进行一次参数更新
 			# 函数返回训练误差的标量值或者标量值得列表
+			# loss_rpn为列表
 			loss_rpn = model_rpn.train_on_batch(X, Y)
+			print("loss_rpn:" , type(loss_rpn))
+
 
             # 在一个batch进行进行预测，返回模型在batch上的预测结果
 			P_rpn = model_rpn.predict_on_batch(X)
@@ -324,5 +343,7 @@ for epoch_num in range(num_epochs):
 		except Exception as e:
 			print('Exception: {}'.format(e))
 			continue
+	
+		
 
 print('Training complete, exiting.')
