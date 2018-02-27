@@ -116,7 +116,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	'''
 	计算rpn
 	:param C: 配置信息
-	:param img_data: 包含一张图片的路径，bbox的坐标和对应的分类
+	:param img_data: 包含一张图片的路径，bbox的坐标和对应的分类(一张图片可能有多组对象)
 	:param width:
 	:param height:
 	:param resized_width:
@@ -179,7 +179,6 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 		gta[bbox_num, 3] = bbox['y2'] * (resized_height / float(height))
 	
 	# rpn ground truth
-
 	for anchor_size_idx in range(len(anchor_sizes)):
 		for anchor_ratio_idx in range(n_anchratios):
 			anchor_x = anchor_sizes[anchor_size_idx] * anchor_ratios[anchor_ratio_idx][0] # anchor 的宽度
@@ -305,6 +304,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	y_rpn_regr = np.expand_dims(y_rpn_regr, axis=0)
 
 	# np.where 返回符合条件的行号
+	# pos_locs 正样本位置索引
 	pos_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 1, y_is_box_valid[0, :, :, :] == 1))
 	neg_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 0, y_is_box_valid[0, :, :, :] == 1))
 
@@ -324,7 +324,10 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 		val_locs = random.sample(range(len(neg_locs[0])), len(neg_locs[0]) - num_pos)
 		y_is_box_valid[0, neg_locs[0][val_locs], neg_locs[1][val_locs], neg_locs[2][val_locs]] = 0
 
+    # y_is_box_valid [0 , num_anchors , output_height , output_width]
+    # y_rpn_overlap [0 , num_anchors , output_height , output_width]
 	y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=1)
+    # y_rpn_regr [0 , 4 * anchors , output_height , output_width]
 	y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=1), y_rpn_regr], axis=1)
 
 	print('y_rpn_cls:' , y_rpn_cls.shape)
