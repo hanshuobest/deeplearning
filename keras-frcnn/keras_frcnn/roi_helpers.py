@@ -173,7 +173,7 @@ def apply_regr_np(X, T):
 
 def non_max_suppression_fast(boxes, probs, overlap_thresh=0.9, max_boxes=300):
 	'''
-	过滤掉重合度高的region并保留最优的
+	非极大抑制，过滤掉重合度高的region并保留最优的
 	:param boxes:
 	:param probs:
 	:param overlap_thresh:
