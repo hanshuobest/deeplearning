@@ -1,3 +1,4 @@
+#coding:utf-8
 import numpy as np
 import pdb
 import math
@@ -128,6 +129,13 @@ def apply_regr(x, y, w, h, tx, ty, tw, th):
 		return x, y, w, h
 
 def apply_regr_np(X, T):
+	'''
+	
+	:param X: 类型numpy.ndarray
+	:param T: 类型numpy.ndarray
+	:return:
+	'''
+	
 	try:
 		x = X[0, :, :]
 		y = X[1, :, :]
@@ -143,6 +151,11 @@ def apply_regr_np(X, T):
 		cy = y + h/2.
 		cx1 = tx * w + cx
 		cy1 = ty * h + cy
+		
+		print("--------------------------------------------")
+		print("tw:" , tw)
+		print("th:" , th)
+		print("--------------------------------------------")
 
 		w1 = np.exp(tw.astype(np.float64)) * w
 		h1 = np.exp(th.astype(np.float64)) * h

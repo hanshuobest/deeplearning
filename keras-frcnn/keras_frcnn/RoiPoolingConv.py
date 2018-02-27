@@ -1,3 +1,4 @@
+#coding:utf-8
 from keras.engine.topology import Layer
 import keras.backend as K
 
