@@ -250,6 +250,7 @@ for epoch_num in range(num_epochs):
 
 
             # 在一个batch进行进行预测，返回模型在batch上的预测结果
+            # P_rpn[0]是分类信息,P_rpn[1]回归信息
 			P_rpn = model_rpn.predict_on_batch(X)
 
 			R = roi_helpers.rpn_to_roi(P_rpn[0], P_rpn[1], C, K.image_dim_ordering(), use_regr=True, overlap_thresh=0.7, max_boxes=300)
