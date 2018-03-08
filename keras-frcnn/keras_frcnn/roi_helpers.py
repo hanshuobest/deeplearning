@@ -292,6 +292,13 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 				regr = np.transpose(regr, (2, 0, 1))
 
 			# 从坐标向量返回坐标矩阵
+			# X是rows行cols列的矩阵
+            # Y是rows行cols列的矩阵
+            # 假设参数1是[0 , 1 , 2] , 参数2是[0 , 1]
+            # 则X为[[0 , 1, 2] ,
+            #      [0 , 1 , 2]]
+            # 则Y为[[0 , 0 , 0] ,
+            #      [1 , 1 , 1]]
 			X, Y = np.meshgrid(np.arange(cols),np. arange(rows))
 
 			A[0, :, :, curr_layer] = X - anchor_x/2

@@ -68,12 +68,13 @@ class RoiPoolingConv(Layer):
         用来进行具体实现操作
         :param x:四维张量
         :param mask:
-        :return:
+        :return: 1 * num_rois * pool_size * pool_size * nb_channels
         '''
         assert(len(x) == 2)
 
         # 四维张量
         img = x[0]
+        # 1 * num_roi * 4
         rois = x[1]
 
         input_shape = K.shape(img)
@@ -81,7 +82,6 @@ class RoiPoolingConv(Layer):
         outputs = []
 
         for roi_idx in range(self.num_rois):
-
             x = rois[0, roi_idx, 0]
             y = rois[0, roi_idx, 1]
             w = rois[0, roi_idx, 2]
@@ -134,7 +134,7 @@ class RoiPoolingConv(Layer):
         if self.dim_ordering == 'th':
             final_output = K.permute_dimensions(final_output, (0, 1, 4, 2, 3))
         else:
-            final_output = K.permute_dimensions(final_output, (0, 1, 2, 3, 4))
+            final_output = K.permute_dimensions(final_output, (0, 1, 2, 3, 4)) #给定一个张量重排张量的轴
 
         return final_output
     

@@ -238,6 +238,8 @@ for epoch_num in range(num_epochs):
 
 			# 原始图片信息，[rpn分类，rpn回归] , 增强图片信息
 			# img_data 类型为字典
+			# X 表示原始图片信息
+            # Y 表示[rpn分类，rpn回归]
 			X, Y, img_data = next(data_gen_train)
 
 			# 本函数在一个batch的数据上进行一次参数更新

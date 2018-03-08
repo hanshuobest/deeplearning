@@ -59,7 +59,7 @@ def nn_base(input_tensor=None, trainable=False):
     if input_tensor is None:
         img_input = Input(shape=input_shape)
     else:
-        if not K.is_keras_tensor(input_tensor):
+        if not K.is_keras_tensor(input_tensor): # 判断input_tensor是否是keras张量
             img_input = Input(tensor=input_tensor, shape=input_shape)
         else:
             img_input = input_tensor
