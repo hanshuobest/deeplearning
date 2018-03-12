@@ -208,6 +208,7 @@ epoch_length = 500
 num_epochs = 500
 iter_num = 0
 
+# losses.shape = (500 , 5)
 losses = np.zeros((epoch_length, 5))
 
 # 列表
