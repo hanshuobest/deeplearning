@@ -240,6 +240,8 @@ for epoch_num in range(num_epochs):
 			# img_data 类型为字典
 			# X 表示原始图片信息
             # Y 表示[rpn分类，rpn回归]
+            # rpn分类 [1 , height , widht , 2 * num_anchors]
+            # rpn回归 [1 , height , widht , 8 * num_anchors]
 			X, Y, img_data = next(data_gen_train)
 
 			# 本函数在一个batch的数据上进行一次参数更新
@@ -251,6 +253,8 @@ for epoch_num in range(num_epochs):
 
             # 在一个batch进行进行预测，返回模型在batch上的预测结果
             # P_rpn[0]是分类信息,P_rpn[1]回归信息
+            # P_rpn[0].shape = (batch , height , width , 2 * num_anchors)
+            # P_rpn[1].shape = (batch , height , width , 8 * num_anchors)
 			P_rpn = model_rpn.predict_on_batch(X)
 
 			R = roi_helpers.rpn_to_roi(P_rpn[0], P_rpn[1], C, K.image_dim_ordering(), use_regr=True, overlap_thresh=0.7, max_boxes=300)

@@ -174,8 +174,8 @@ def apply_regr_np(X, T):
 def non_max_suppression_fast(boxes, probs, overlap_thresh=0.9, max_boxes=300):
 	'''
 	非极大抑制，过滤掉重合度高的region并保留最优的
-	:param boxes:
-	:param probs:
+	:param boxes:[2 * num_anchors * height * width , 4]
+	:param probs:[1 , batch * 2 * num_anchors * height * width]
 	:param overlap_thresh:
 	:param max_boxes:
 	:return:
@@ -251,8 +251,8 @@ import time
 def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=300,overlap_thresh=0.9):
 	'''
 
-	:param rpn_layer:分类信息
-	:param regr_layer:回归信息
+	:param rpn_layer:分类信息 [batch ,height , widht , 2 * num_anchors]
+	:param regr_layer:回归信息[batch ,height , widht , 8 * num_anchors]
 	:param C:
 	:param dim_ordering:
 	:param use_regr:
@@ -276,6 +276,7 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 
 	curr_layer = 0
 	if dim_ordering == 'tf':
+        # A.shape = (4 , height , width , 2 * num_anchors)
 		A = np.zeros((4, rpn_layer.shape[1], rpn_layer.shape[2], rpn_layer.shape[3]))
 	elif dim_ordering == 'th':
 		A = np.zeros((4, rpn_layer.shape[2], rpn_layer.shape[3], rpn_layer.shape[1]))
@@ -320,8 +321,9 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 			A[3, :, :, curr_layer] = np.minimum(rows-1, A[3, :, :, curr_layer])
 
 			curr_layer += 1
-
+    # all_boxes.shape = (2 * num_anchors * height * width  , 4)
 	all_boxes = np.reshape(A.transpose((0, 3, 1,2)), (4, -1)).transpose((1, 0))
+	# all_probs.shape=(1 , batch * height * width * 2 * num_anchors)
 	all_probs = rpn_layer.transpose((0, 3, 1, 2)).reshape((-1))
 
 	x1 = all_boxes[:, 0]

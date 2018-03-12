@@ -123,7 +123,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 	:param resized_width:
 	:param resized_height:
 	:param img_length_calc_function:
-	:return:y_rpn_cls,y_rpn_regr是否包含物体类别信息，和回归梯度
+	:return:y_rpn_cls,y_rpn_regr是否包含物体类别信息，和回归梯度,其形状为[1 , 2 * num_anchors , height , width] , [1 , 8 * num_anchors , height , width]
 	'''
 
 	# 图片到特征图的缩放倍数
@@ -325,11 +325,13 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 		val_locs = random.sample(range(len(neg_locs[0])), len(neg_locs[0]) - num_pos)
 		y_is_box_valid[0, neg_locs[0][val_locs], neg_locs[1][val_locs], neg_locs[2][val_locs]] = 0
 
-    # y_is_box_valid [0 , num_anchors , output_height , output_width]
-    # y_rpn_overlap [0 , num_anchors , output_height , output_width]
+    # y_is_box_valid [1 , num_anchors , output_height , output_width]
+    # y_rpn_overlap [1 , num_anchors , output_height , output_width]
+	# y_rpn_cls [1 , 2 * num_anchors , output_height , output_width]
 	y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=1)
-    # y_rpn_regr [0 , 4 * anchors , output_height , output_width]
+    # y_rpn_regr [1 , 4 * anchors , output_height , output_width]
 	y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=1), y_rpn_regr], axis=1)
+    # y_rpn_regr [1 , 8 * anchors , output_height , output_width]
 
 	print('y_rpn_cls:' , y_rpn_cls.shape)
 	print('y_rpn_regr:' , y_rpn_regr.shape)
@@ -387,9 +389,9 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 
 				# read in image, and optionally add augmentation
 				if mode == 'train':
+                    # img_data_aug 增强后的图片
+                    # x_img 原始图片集
 					img_data_aug, x_img = data_augment.augment(img_data, C, augment=True)
-					# img_data_aug 增强后的图片
-					# x_img 原始图片集
 				else:
 					img_data_aug, x_img = data_augment.augment(img_data, C, augment=False)
 
@@ -407,6 +409,8 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 				x_img = cv2.resize(x_img, (resized_width, resized_height), interpolation=cv2.INTER_CUBIC)
 
 				try:
+                    # y_rpn_cls [1 , 2 * num_anchors , height , width]
+                    # y_rpn_regr [1 , 8 * num_anchors , height , width]
 					y_rpn_cls, y_rpn_regr = calc_rpn(C, img_data_aug, width, height, resized_width, resized_height, img_length_calc_function)
 				except:
 					continue
@@ -423,6 +427,7 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 				print('x_img.shape:' , x_img.shape)
 				# x_img的尺寸变为(3 , 600 , 800)
 				x_img = np.transpose(x_img, (2, 0, 1))
+                # x_img [1 , 3 , height , width]
 				x_img = np.expand_dims(x_img, axis=0)
 
 				# y_rpn_regr.shape=(1 , 72 , 37 , 50)
@@ -430,9 +435,12 @@ def get_anchor_gt(all_img_data, class_count, C, img_length_calc_function, backen
 				y_rpn_regr[:, y_rpn_regr.shape[1]//2:, :, :] *= C.std_scaling # 后半部分为何要乘以标准尺度
 
 				if backend == 'tf':
+                    # x_img [1 , height , width , channels]
 					x_img = np.transpose(x_img, (0, 2, 3, 1))
 					# y_rpn_cls.shape=(1 , 18 , 37 , 50)
+                    # y_rpn_cls.shape=(1 , height , width , 2 * num_anchors)
 					y_rpn_cls = np.transpose(y_rpn_cls, (0, 2, 3, 1))
+                    # y_rpn_cls.shape=(1 , height , width , 8 * num_anchors)
 					y_rpn_regr = np.transpose(y_rpn_regr, (0, 2, 3, 1))
 
 				yield np.copy(x_img), [np.copy(y_rpn_cls), np.copy(y_rpn_regr)], img_data_aug
