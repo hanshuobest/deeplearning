@@ -66,7 +66,7 @@ class RoiPoolingConv(Layer):
     def call(self, x, mask=None):
         '''
         用来进行具体实现操作
-        :param x:四维张量,x这里表示什么 ？
+        :param x:四维张量,输入张量？
         :param mask:
         :return: 1 * num_rois * pool_size * pool_size * nb_channels
         '''
