@@ -130,8 +130,8 @@ def apply_regr(x, y, w, h, tx, ty, tw, th):
 
 def apply_regr_np(X, T):
 	'''
-	
-	:param X: 类型numpy.ndarray
+	坐标回归
+	:param X: 类型numpy.ndarray，锚点坐标
 	:param T: 类型numpy.ndarray
 	:return:
 	'''
@@ -157,7 +157,9 @@ def apply_regr_np(X, T):
 		print("th:" , th)
 		print("--------------------------------------------")
 
+        # w1 = pw * exp(tw)
 		w1 = np.exp(tw.astype(np.float64)) * w
+        # h1 = ph * exp(th)
 		h1 = np.exp(th.astype(np.float64)) * h
 		x1 = cx1 - w1/2.
 		y1 = cy1 - h1/2.
