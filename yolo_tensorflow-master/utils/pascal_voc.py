@@ -10,14 +10,18 @@ import yolo.config as cfg
 
 class pascal_voc(object):
     def __init__(self, phase, rebuild=False):
+        # data/pascal_voc/VOCdevkit
         self.devkil_path = os.path.join(cfg.PASCAL_PATH, 'VOCdevkit')
+        # data/pascal_voc/VOCdevkit/VOC2007
         self.data_path = os.path.join(self.devkil_path, 'VOC2007')
         self.cache_path = cfg.CACHE_PATH
         self.batch_size = cfg.BATCH_SIZE
         self.image_size = cfg.IMAGE_SIZE
         self.cell_size = cfg.CELL_SIZE
+        # 类别信息
         self.classes = cfg.CLASSES
         # self.class_to_ind = dict(zip(self.classes, xrange(len(self.classes))))
+        # 类别对应的索引
         self.class_to_ind = dict(zip(self.classes , range(len(self.classes))))
         self.flipped = cfg.FLIPPED
         self.phase = phase
