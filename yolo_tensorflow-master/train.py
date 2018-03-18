@@ -156,8 +156,8 @@ def main():
     if args.data_dir != cfg.DATA_PATH:
         update_config_paths(args.data_dir, args.weights)
 
-    # os.environ['CUDA_VISIBLE_DEVICES'] = cfg.GPU
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ['CUDA_VISIBLE_DEVICES'] = cfg.GPU
+
 
     yolo = YOLONet()
     pascal = pascal_voc('train')
