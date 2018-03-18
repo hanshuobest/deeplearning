@@ -59,4 +59,4 @@ class Config:
 
 
 		# 保存输出的模型
-		self.model_path = 'model_frcnn.vgg.hdf5'
+		self.model_path = 'model_frcnn.vgg.h5'

@@ -17,7 +17,8 @@ sys.setrecursionlimit(40000)
 
 parser = OptionParser()
 
-parser.add_option("-p", "--path", dest="test_path", help="Path to test data.")
+# 测试数据路径
+parser.add_option("-p", "--path", dest="test_path", help="Path to test data." , default = 'Test')
 parser.add_option("-n", "--num_rois", type="int", dest="num_rois",
 				help="Number of ROIs per iteration. Higher means more memory use.", default=32)
 parser.add_option("--config_filename", dest="config_filename", help=
@@ -33,13 +34,18 @@ if not options.test_path:   # if filename is not given
 
 config_output_filename = options.config_filename
 
-with open(config_output_filename, 'rb') as f_in:
-	C = pickle.load(f_in)
+# with open(config_output_filename, 'rb') as f_in:
+# 	C = pickle.load(f_in)
 
+C = config.Config()
+C.network = 'vgg'
 if C.network == 'resnet50':
 	import keras_frcnn.resnet as nn
 elif C.network == 'vgg':
 	import keras_frcnn.vgg as nn
+	
+C = config.Config()
+C.network = 'vgg'
 
 # turn off any data augmentation at test time
 C.use_horizontal_flips = False
