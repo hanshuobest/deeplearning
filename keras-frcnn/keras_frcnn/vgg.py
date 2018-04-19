@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+
 import warnings
 
 from keras.models import Model
@@ -136,6 +137,7 @@ def classifier(base_layers, input_rois, num_rois, nb_classes = 21, trainable=Fal
         input_shape = (num_rois,512,7,7)
 
     # 卷积池化层
+    # 该层的输入是feature maps和roi的坐标信息
     out_roi_pool = RoiPoolingConv(pooling_regions, num_rois)([base_layers, input_rois])
 
     out = TimeDistributed(Flatten(name='flatten'))(out_roi_pool)
