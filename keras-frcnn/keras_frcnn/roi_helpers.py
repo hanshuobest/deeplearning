@@ -254,7 +254,7 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 	'''
 
 	:param rpn_layer:分类信息 [batch ,height , widht , 2 * num_anchors]
-	:param regr_layer:回归信息[batch ,height , widht , 8 * num_anchors]
+	:param regr_layer:回归信息[batch ,height , widht , 4 * num_anchors]
 	:param C:
 	:param dim_ordering:
 	:param use_regr:
@@ -292,6 +292,7 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 				regr = regr_layer[0, 4 * curr_layer:4 * curr_layer + 4, :, :]
 			else:
 				regr = regr_layer[0, :, :, 4 * curr_layer:4 * curr_layer + 4]
+				# [4 , height , width]
 				regr = np.transpose(regr, (2, 0, 1))
 
 			# 从坐标向量返回坐标矩阵
@@ -312,8 +313,14 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 			if use_regr:
 				A[:, :, :, curr_layer] = apply_regr_np(A[:, :, :, curr_layer], regr)
 
+            # A[0 , : , : , curr_layer] 表示x坐标
+            # A[1 , : , : , curr_layer] 表示y坐标
+            # A[2 , : , : , curr_layer] 表示w
+            # A[3 , : , : , curr_layer] 表示h
+
 			A[2, :, :, curr_layer] = np.maximum(1, A[2, :, :, curr_layer])
 			A[3, :, :, curr_layer] = np.maximum(1, A[3, :, :, curr_layer])
+            # 转变成 [x1,y1,x2,y2]
 			A[2, :, :, curr_layer] += A[0, :, :, curr_layer]
 			A[3, :, :, curr_layer] += A[1, :, :, curr_layer]
 
