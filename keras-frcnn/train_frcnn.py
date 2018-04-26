@@ -249,8 +249,11 @@ for epoch_num in range(num_epochs):
             # P_rpn[1].shape = (batch , height , width , 8 * num_anchors)
 			P_rpn = model_rpn.predict_on_batch(X)
 
+            # 返回指定数量的候选框
 			R = roi_helpers.rpn_to_roi(P_rpn[0], P_rpn[1], C, K.image_dim_ordering(), use_regr=True, overlap_thresh=0.7, max_boxes=300)
 			# note: calc_iou converts from (x1,y1,x2,y2) to (x,y,w,h) format
+			# img_data：增强图片信息
+            # X2： 筛选后的预选框，Y1:对应的类别（one-hot编码形式），Y2:相应的回归梯度，IouS：交并比
 			X2, Y1, Y2, IouS = roi_helpers.calc_iou(R, img_data, C, class_mapping)
 
 			if X2 is None:

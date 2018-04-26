@@ -115,8 +115,8 @@ class SampleSelector:
 
 def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_length_calc_function):
 	'''
-	计算rpn
-	:param C: 配置信息
+	得到每一个anchor的性质
+	:param C: 训练信息类
 	:param img_data: 包含一张图片的路径，bbox的坐标和对应的分类(一张图片可能有多组对象)
 	:param width:
 	:param height:

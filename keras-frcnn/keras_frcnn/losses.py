@@ -33,7 +33,7 @@ def rpn_loss_regr(num_anchors):
 
 	return rpn_loss_regr_fixed_num
 
-# 分类损失
+# 分类损失 , num_anchors :9
 def rpn_loss_cls(num_anchors):
 	def rpn_loss_cls_fixed_num(y_true, y_pred):
 		if K.image_dim_ordering() == 'tf':

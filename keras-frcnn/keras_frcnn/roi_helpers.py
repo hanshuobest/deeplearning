@@ -8,12 +8,12 @@ import copy
 
 def calc_iou(R, img_data, C, class_mapping):
 	'''
-	计算iou
-	:param R:代表什么 ？
-	:param img_data:
-	:param C:
-	:param class_mapping:
-	:return:
+	生成classifier网络的训练的数据
+	:param R:预选框
+	:param img_data:图片信息
+	:param C:训练信息
+	:param class_mapping:类别与映射数字之间的关系
+	:return:返回 1：筛选后的预选框，2：对应的类别，3：相应的回归梯度，4：交并比
 	'''
 	bboxes = img_data['bboxes']
 	(width, height) = (img_data['width'], img_data['height'])
@@ -29,10 +29,12 @@ def calc_iou(R, img_data, C, class_mapping):
 		gta[bbox_num, 2] = int(round(bbox['y1'] * (resized_height / float(height))/C.rpn_stride))
 		gta[bbox_num, 3] = int(round(bbox['y2'] * (resized_height / float(height))/C.rpn_stride))
 
+    # 记录感兴趣区域
 	x_roi = []
 	y_class_num = []
 	y_class_regr_coords = []
 	y_class_regr_label = []
+    # 记录iou系数
 	IoUs = [] # for debugging only
 
 	for ix in range(R.shape[0]):
@@ -44,13 +46,14 @@ def calc_iou(R, img_data, C, class_mapping):
 
 		best_iou = 0.0
 		best_bbox = -1
+        # len(bboxes)增强图片中有多少个bboxes
 		for bbox_num in range(len(bboxes)):
 			curr_iou = data_generators.iou([gta[bbox_num, 0], gta[bbox_num, 2], gta[bbox_num, 1], gta[bbox_num, 3]], [x1, y1, x2, y2])
 			if curr_iou > best_iou:
 				best_iou = curr_iou
 				best_bbox = bbox_num
 
-		if best_iou < C.classifier_min_overlap:
+		if best_iou < C.classifier_min_overlap:# 0.1
 				continue
 		else:
 			w = x2 - x1
@@ -58,6 +61,7 @@ def calc_iou(R, img_data, C, class_mapping):
 			x_roi.append([x1, y1, w, h])
 			IoUs.append(best_iou)
 
+            # 0.1<= best_iou<= 0.5
 			if C.classifier_min_overlap <= best_iou < C.classifier_max_overlap:
 				# hard negative example
 				cls_name = 'bg'
@@ -77,14 +81,19 @@ def calc_iou(R, img_data, C, class_mapping):
 				print('roi = {}'.format(best_iou))
 				raise RuntimeError
 
+        # 转为one-hot形式
 		class_num = class_mapping[cls_name]
 		class_label = len(class_mapping) * [0]
 		class_label[class_num] = 1
+
 		y_class_num.append(copy.deepcopy(class_label))
+        # 存储边框的回归梯度
 		coords = [0] * 4 * (len(class_mapping) - 1)
+        # 决定是否要加入计算Loss
 		labels = [0] * 4 * (len(class_mapping) - 1)
 		if cls_name != 'bg':
 			label_pos = 4 * class_num
+            # [8.0 , 8.0 , 4.0 , 4.0]
 			sx, sy, sw, sh = C.classifier_regr_std
 			coords[label_pos:4+label_pos] = [sx*tx, sy*ty, sw*tw, sh*th]
 			labels[label_pos:4+label_pos] = [1, 1, 1, 1]
@@ -98,6 +107,7 @@ def calc_iou(R, img_data, C, class_mapping):
 		return None, None, None, None
 
 	X = np.array(x_roi)
+    # 列别的one-hot编码
 	Y1 = np.array(y_class_num)
 	Y2 = np.concatenate([np.array(y_class_regr_label),np.array(y_class_regr_coords)],axis=1)
 
@@ -133,7 +143,7 @@ def apply_regr_np(X, T):
 	坐标回归
 	:param X: 类型numpy.ndarray，锚点坐标
 	:param T: 类型numpy.ndarray
-	:return:
+	:return:返回框的坐标[cx , cy , w , h]
 	'''
 	
 	try:
@@ -252,15 +262,15 @@ def non_max_suppression_fast(boxes, probs, overlap_thresh=0.9, max_boxes=300):
 import time
 def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=300,overlap_thresh=0.9):
 	'''
-
-	:param rpn_layer:分类信息 [batch ,height , widht , 2 * num_anchors]
-	:param regr_layer:回归信息[batch ,height , widht , 4 * num_anchors]
+    将rpn网络的预测结果转化到一个个预选框
+	:param rpn_layer:分类信息 [batch ,height , widht , 2 * num_anchors] 表示框对应的概率
+	:param regr_layer:回归信息[batch ,height , widht , 8 * num_anchors]每个框对应的回归梯度
 	:param C:
 	:param dim_ordering:
 	:param use_regr:
-	:param max_boxes:
-	:param overlap_thresh:
-	:return:
+	:param max_boxes:取多少个框
+	:param overlap_thresh:重叠度阈值
+	:return:返回指定数量的预选框，格式为(x1,y1,x2,y2)
 	'''
 
 	regr_layer = regr_layer / C.std_scaling
@@ -285,14 +295,15 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 
 	for anchor_size in anchor_sizes:
 		for anchor_ratio in anchor_ratios:
-
+            # 得到框的长宽在原图上的映射
 			anchor_x = (anchor_size * anchor_ratio[0])/C.rpn_stride
 			anchor_y = (anchor_size * anchor_ratio[1])/C.rpn_stride
 			if dim_ordering == 'th':
 				regr = regr_layer[0, 4 * curr_layer:4 * curr_layer + 4, :, :]
 			else:
+                # 得到框对应的回归梯度，将深度都放到第一个维度
 				regr = regr_layer[0, :, :, 4 * curr_layer:4 * curr_layer + 4]
-				# [4 , height , width]
+				# regr.shape : [4 , height , width]
 				regr = np.transpose(regr, (2, 0, 1))
 
 			# 从坐标向量返回坐标矩阵
@@ -305,12 +316,15 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
             #      [1 , 1 , 1]]
 			X, Y = np.meshgrid(np.arange(cols),np. arange(rows))
 
+            # A.shape = (4 , height , width , 2 * num_anchors)
+            # 得到每一个anchor对应的坐标
 			A[0, :, :, curr_layer] = X - anchor_x/2
 			A[1, :, :, curr_layer] = Y - anchor_y/2
 			A[2, :, :, curr_layer] = anchor_x
 			A[3, :, :, curr_layer] = anchor_y
 
 			if use_regr:
+                # 使用regr对anchor所确定的框进行修正
 				A[:, :, :, curr_layer] = apply_regr_np(A[:, :, :, curr_layer], regr)
 
             # A[0 , : , : , curr_layer] 表示x坐标
