@@ -107,7 +107,7 @@ def calc_iou(R, img_data, C, class_mapping):
 		return None, None, None, None
 
 	X = np.array(x_roi)
-    # 列别的one-hot编码
+    # 识别的one-hot编码
 	Y1 = np.array(y_class_num)
 	Y2 = np.concatenate([np.array(y_class_regr_label),np.array(y_class_regr_coords)],axis=1)
 
@@ -275,8 +275,8 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 
 	regr_layer = regr_layer / C.std_scaling
 
-	anchor_sizes = C.anchor_box_scales
-	anchor_ratios = C.anchor_box_ratios
+	anchor_sizes = C.anchor_box_scales  # 3
+	anchor_ratios = C.anchor_box_ratios # 3
 
 	assert rpn_layer.shape[0] == 1
 
@@ -286,6 +286,7 @@ def rpn_to_roi(rpn_layer, regr_layer, C, dim_ordering, use_regr=True, max_boxes=
 	elif dim_ordering == 'tf':
 		(rows, cols) = rpn_layer.shape[1:3]
 
+	# 代表的是特定长度和比例的框所代表的编号
 	curr_layer = 0
 	if dim_ordering == 'tf':
         # A.shape = (4 , height , width , 2 * num_anchors)

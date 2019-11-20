@@ -232,12 +232,12 @@ for epoch_num in range(num_epochs):
 			# img_data 类型为字典
 			# X 表示原始图片信息
             # Y 表示[rpn分类，rpn回归]
-            # rpn分类 [1 , height , widht , 2 * num_anchors]
-            # rpn回归 [1 , height , widht , 8 * num_anchors]
+            # rpn分类 [1 , height , widht , 2 * num_anchors]  (1, 38, 50, 18)
+            # rpn回归 [1 , height , widht , 8 * num_anchors]  (1, 38, 50, 72)
 			X, Y, img_data = next(data_gen_train)
 
 			# 本函数在一个batch的数据上进行一次参数更新
-			# 函数返回训练误差的标量值或者标量值得列表
+			# 函数返回训练误差的标量值或者标量值的列表
 			# loss_rpn为列表
 			loss_rpn = model_rpn.train_on_batch(X, Y)
 			print("loss_rpn:" , type(loss_rpn))
@@ -340,6 +340,7 @@ for epoch_num in range(num_epochs):
 					best_loss = curr_loss
 					# model_all.save_weights(C.model_path)
 					model_all.save('my_train_model.h5')
+					# model_all.sample_weights('my_train_model.h5')
 
 				break
 

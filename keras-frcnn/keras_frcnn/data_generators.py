@@ -222,10 +222,10 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 						curr_iou = iou([gta[bbox_num, 0], gta[bbox_num, 2], gta[bbox_num, 1], gta[bbox_num, 3]], [x1_anc, y1_anc, x2_anc, y2_anc])
 						# calculate the regression targets if they will be needed
 						if curr_iou > best_iou_for_bbox[bbox_num] or curr_iou > C.rpn_max_overlap: # ron_max_overlap :0.7
-							# bbox中心点坐标
+							# ground truth  bbox中心点坐标
 							cx = (gta[bbox_num, 0] + gta[bbox_num, 1]) / 2.0
 							cy = (gta[bbox_num, 2] + gta[bbox_num, 3]) / 2.0
-							# 真实bbox中心点坐标
+							# anchor bbox中心点坐标
 							cxa = (x1_anc + x2_anc)/2.0
 							cya = (y1_anc + y2_anc)/2.0
 
@@ -296,8 +296,7 @@ def calc_rpn(C, img_data, width, height, resized_width, resized_height, img_leng
 			start = 4 * (best_anchor_for_bbox[idx,2] + n_anchratios * best_anchor_for_bbox[idx,3])
 
 			# best_anchor_for_bbox[idx,0] = y坐标 ，best_anchor_for_bbox[idx,1] = x坐标
-			y_rpn_regr[
-				best_anchor_for_bbox[idx,0], best_anchor_for_bbox[idx,1], start:start+4] = best_dx_for_bbox[idx, :]
+			y_rpn_regr[best_anchor_for_bbox[idx,0], best_anchor_for_bbox[idx,1], start:start+4] = best_dx_for_bbox[idx, :]
 
 	# 转为 [9 , output_height , output_width]
 	y_rpn_overlap = np.transpose(y_rpn_overlap, (2, 0, 1))
