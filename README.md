@@ -4,7 +4,7 @@
 - face_recognition 人脸识别
 - facetracker 人脸跟踪
 - Faster-RCNN 
-- GAN
+- [GAN](https://github.com/hanshuobest/deeplearning/tree/master/GAN)
 - keras-fire-detection
 - keras-frcnn
 - service-streamer
