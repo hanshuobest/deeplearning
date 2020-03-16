@@ -4,6 +4,7 @@ import numpy as np
 import sys
 from PIL import  Image
 from model_config import *
+import imutils
 
 def draw_bbox(img_path, result, color=(255, 0, 0),thickness=2):
     if isinstance(img_path, str):
